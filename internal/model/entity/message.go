@@ -10,7 +10,7 @@ import (
 
 // Message is the golang structure for table message.
 type Message struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	UserId     int         `json:"user_id"     ` //
 	ReciveId   int         `json:"recive_id"   ` // 接收消息的用户;为空的话则为管理员向全体用户发布的通知
 	Type       int         `json:"type"        ` // 0：网站通知；1：回复我的；2：给我点赞的；3：@我的

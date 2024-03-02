@@ -22,7 +22,8 @@ type SectionDao struct {
 type SectionColumns struct {
 	Id         string //
 	Name       string //
-	Ico        string // url链接
+	Dc         string // 描述
+	Icon       string // url链接
 	CreateTime string //
 	UpdateTime string //
 	DeleteTime string //
@@ -32,7 +33,8 @@ type SectionColumns struct {
 var sectionColumns = SectionColumns{
 	Id:         "id",
 	Name:       "name",
-	Ico:        "ico",
+	Dc:         "dc",
+	Icon:       "icon",
 	CreateTime: "create_time",
 	UpdateTime: "update_time",
 	DeleteTime: "delete_time",

@@ -76,6 +76,9 @@ func (c *User) NameExist(r *ghttp.Request) {
 }
 
 func (c *User) IsLogin(r *ghttp.Request) {
-	ok := service.User().IsLogin(r.Context())
+	ok, err := service.User().IsLogin(r.Context())
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
 	r.Response.WriteJsonExit(utility.GetR().PUT("is_login", ok))
 }

@@ -18,13 +18,18 @@ var (
 		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
 			s := g.Server()
 			s.Use(
+				// 开放域
 				ghttp.MiddlewareCORS,
 				service.Middleware().Ctx,
-			) // 开放域
+				service.Middleware().HandleHttpRes,
+			)
 			/**
 			控制器对象
 			*/
-			cUser := controller.CUser()
+			cUser := new(controller.User)
+			cImg := new(controller.Img)
+			cSection := new(controller.Section)
+			cPost := new(controller.Post)
 			// 不鉴权
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.POST("/register", cUser.Register)
@@ -34,13 +39,38 @@ var (
 					group.GET("/is_login", cUser.IsLogin)
 				})
 			})
-			// 鉴权
+			// 鉴权: 普通用户
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.Middleware(
 					service.Middleware().Auth,
 				)
 				group.Group("/user", func(group *ghttp.RouterGroup) {
 					group.GET("/logout", cUser.Logout)
+				})
+				group.Group("/img", func(group *ghttp.RouterGroup) {
+					group.GET("/getSignature/:count", cImg.GetSignatures)
+					group.GET("/avatars", cImg.GetAllAvatar)
+				})
+				group.Group("/section", func(group *ghttp.RouterGroup) {
+					group.GET("/all", cSection.GetAll)
+				})
+				group.Group("/post", func(group *ghttp.RouterGroup) {
+					group.POST("/", cPost.Add)
+				})
+			})
+			// 鉴权: 管理员
+			s.Group("/", func(group *ghttp.RouterGroup) {
+				group.Middleware(
+					service.Middleware().AuthAdm,
+				)
+				group.Group("/section", func(group *ghttp.RouterGroup) {
+					group.POST("/", cSection.Add)
+					group.PUT("/", cSection.Update)
+				})
+				group.Group("/img", func(group *ghttp.RouterGroup) {
+					group.POST("/", cImg.Save)
+					group.DELETE("/avatar/:id", cImg.DeleteAvatar)
+					group.PUT("/", cImg.Update)
 				})
 			})
 			s.Run()

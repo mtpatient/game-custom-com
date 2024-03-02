@@ -10,7 +10,7 @@ import (
 
 // Comment is the golang structure for table comment.
 type Comment struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	PostId     int         `json:"post_id"     ` //
 	UserId     int         `json:"user_id"     ` //
 	ReplayId   int         `json:"replay_id"   ` // 被评论者

@@ -10,9 +10,9 @@ import (
 
 // VisitData is the golang structure for table visit_data.
 type VisitData struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	Date       *gtime.Time `json:"date"        ` //
-	ViewCount  uint        `json:"view_count"  ` // 每日访客数
+	ViewCount  int         `json:"view_count"  ` // 每日访客数
 	CreateTime *gtime.Time `json:"create_time" ` //
 	UpdateTime *gtime.Time `json:"update_time" ` //
 	DeleteTime *gtime.Time `json:"delete_time" ` //

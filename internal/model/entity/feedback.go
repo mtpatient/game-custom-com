@@ -10,7 +10,7 @@ import (
 
 // Feedback is the golang structure for table feedback.
 type Feedback struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	UserId     int         `json:"user_id"     ` //
 	Comment    string      `json:"comment"     ` //
 	CreateTime *gtime.Time `json:"create_time" ` //

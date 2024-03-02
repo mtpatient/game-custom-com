@@ -10,7 +10,7 @@ import (
 
 // Error is the golang structure for table error.
 type Error struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	Log        string      `json:"log"         ` //
 	Type       int         `json:"type"        ` //
 	CreateTime *gtime.Time `json:"create_time" ` //

@@ -10,9 +10,9 @@ import (
 
 // AdminLog is the golang structure for table admin_log.
 type AdminLog struct {
-	Id         uint        `json:"id"          ` //
+	Id         int         `json:"id"          ` //
 	UserId     int         `json:"user_id"     ` //
-	Type       int         `json:"type"        ` //
+	Type       string      `json:"type"        ` //
 	Content    string      `json:"content"     ` //
 	CreateTime *gtime.Time `json:"create_time" ` //
 	DeleteTime *gtime.Time `json:"delete_time" ` //

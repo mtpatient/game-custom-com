@@ -23,13 +23,12 @@ type PostColumns struct {
 	Id           string //
 	UserId       string // 用户id
 	Title        string // 标题
-	Image        string // 封面图片
 	Content      string // 帖子内容
-	SectionId    string // 所属板块
+	Section      string // 所属板块
 	ViewCount    string // 浏览数
 	LikeCount    string // 点赞数
 	CollectCount string // 被收藏数
-	Status       string // 0：正常，1：禁用，2：申请恢复
+	Status       string // 0：正常，1：禁用，2：仅自己可见，3：申请恢复
 	CreateTime   string //
 	UpdateTime   string //
 	DeleteTime   string //
@@ -40,9 +39,8 @@ var postColumns = PostColumns{
 	Id:           "id",
 	UserId:       "user_id",
 	Title:        "title",
-	Image:        "image",
 	Content:      "content",
-	SectionId:    "section_id",
+	Section:      "section",
 	ViewCount:    "view_count",
 	LikeCount:    "like_count",
 	CollectCount: "collect_count",

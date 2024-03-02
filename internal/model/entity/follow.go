@@ -10,9 +10,9 @@ import (
 
 // Follow is the golang structure for table follow.
 type Follow struct {
-	Id           uint        `json:"id"             ` //
-	UserId       uint        `json:"user_id"        ` //
-	FollowUserId uint        `json:"follow_user_id" ` //
+	Id           int         `json:"id"             ` //
+	UserId       int         `json:"user_id"        ` //
+	FollowUserId int         `json:"follow_user_id" ` //
 	CreateTime   *gtime.Time `json:"create_time"    ` //
 	DeleteTime   *gtime.Time `json:"delete_time"    ` //
 }

@@ -12,7 +12,8 @@ type IUser interface {
 	Logout(ctx context.Context, token string) error
 	NameExist(ctx context.Context, username string) (bool, error)
 	GetById(ctx context.Context, id int64) (entity.User, error)
-	IsLogin(ctx context.Context) bool
+	IsLogin(ctx context.Context) (bool, error)
+	UserRole(ctx context.Context) (int64, error)
 }
 
 var localUser IUser

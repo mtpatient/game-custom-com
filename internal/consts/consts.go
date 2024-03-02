@@ -22,3 +22,8 @@ const (
 	LikeKey     = "like:post:"
 	UserKey     = "game:user:"
 )
+
+const (
+	LogSuccess = "success"
+	LogError   = "error"
+)

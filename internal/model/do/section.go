@@ -14,7 +14,8 @@ type Section struct {
 	g.Meta     `orm:"table:section, do:true"`
 	Id         interface{} //
 	Name       interface{} //
-	Ico        interface{} // url链接
+	Dc         interface{} // 描述
+	Icon       interface{} // url链接
 	CreateTime *gtime.Time //
 	UpdateTime *gtime.Time //
 	DeleteTime *gtime.Time //

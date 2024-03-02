@@ -9,7 +9,6 @@ import (
 	"game-custom-com/internal/model/do"
 	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
-
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/util/guid"
@@ -24,11 +23,19 @@ type (
 	}
 )
 
-func (s *sUser) IsLogin(ctx context.Context) bool {
-	if v := service.Context().Get(ctx); v != nil && v.User != nil {
-		return true
+func (s *sUser) UserRole(ctx context.Context) (int64, error) {
+	v := service.Context().Get(ctx)
+	if v == nil {
+		return 0, gerror.New("用户未登录")
 	}
-	return false
+	return int64(v.User.Role), nil
+}
+
+func (s *sUser) IsLogin(ctx context.Context) (bool, error) {
+	if v := service.Context().Get(ctx); v != nil && v.User != nil {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (s *sUser) GetById(ctx context.Context, id int64) (entity.User, error) {
@@ -82,9 +89,13 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 
 func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, error) {
 	var u entity.User
-	if s.IsLogin(ctx) {
-		return u, fmt.Sprintf("%s", service.Context().Get(ctx).Data["token"]),
-			gerror.New("User has Login!")
+	if ok, err := s.IsLogin(ctx); err != nil {
+		return u, fmt.Sprintf("%s", service.Context().Get(ctx).Data["token"]), err
+	} else {
+		if ok {
+			return u, fmt.Sprintf("%s", service.Context().Get(ctx).Data["token"]),
+				gerror.New("User has Login!")
+		}
 	}
 	db := dao.User.Ctx(ctx)
 
@@ -102,7 +113,7 @@ func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, 
 
 	if u.Id > 0 {
 		token := guid.S()
-		err = g.Redis().SetEX(ctx, consts.TokenKey+token, u.Id, consts.TokenKeyTTL)
+		err = g.Redis().SetEX(ctx, consts.TokenKey+token, u.Id, consts.TokenKeyTTL*60)
 		if err != nil {
 			return u, "", err
 		}

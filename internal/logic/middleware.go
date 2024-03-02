@@ -19,6 +19,30 @@ type (
 func init() {
 	service.RegisterMiddleware(&sMiddleware{})
 }
+
+func (s sMiddleware) AuthAdm(r *ghttp.Request) {
+	role, err := service.User().UserRole(r.Context())
+	if err != nil || role == 0 {
+		r.Response.WriteStatus(http.StatusForbidden)
+	}
+	r.Middleware.Next()
+}
+
+func (s sMiddleware) HandleHttpRes(r *ghttp.Request) {
+	r.Middleware.Next()
+
+	if r.Response.Status >= http.StatusInternalServerError {
+		r.Response.ClearBuffer()
+		r.Response.Writeln("哎哟我去，服务器居然开小差了，请稍后再试吧！")
+	}
+
+	//errStr := ""
+	//if err := r.GetError(); err != nil {
+	//	errStr = err.Error()
+	//}
+	//g.Log().Println(r.Response.Status, r.URL.Path, errStr)
+}
+
 func (s sMiddleware) Ctx(r *ghttp.Request) {
 	customCtx := &model.Context{
 		Data: make(g.Map),
@@ -59,7 +83,7 @@ func (s sMiddleware) Ctx(r *ghttp.Request) {
 }
 
 func (s sMiddleware) Auth(r *ghttp.Request) {
-	if service.User().IsLogin(r.Context()) {
+	if ok, _ := service.User().IsLogin(r.Context()); ok {
 		r.Middleware.Next()
 	} else {
 		r.Response.WriteStatus(http.StatusForbidden)
