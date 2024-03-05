@@ -56,25 +56,28 @@ func (s sMiddleware) Ctx(r *ghttp.Request) {
 	}
 
 	if res, _ := g.Redis().Get(r.Context(), consts.TokenKey+token); res.Int() > 0 {
-		_, err := g.Redis().Do(r.Context(), "expire", consts.TokenKey+token, consts.TokenKeyTTL)
+		_, err := g.Redis().Do(r.Context(), "expire", consts.TokenKey+token, consts.TokenKeyTTL*60)
 		if err != nil {
 			r.Response.WriteJsonExit(utility.GetR().Error(consts.RedisErrCode, err.Error()))
 		}
 
-		user, _ := service.User().GetById(r.Context(), res.Int64())
+		user, _ := service.User().GetById(r.Context(), res.Int())
 
 		customCtx.User = &entity.User{
-			Id:         user.Id,
-			Username:   user.Username,
-			Password:   user.Password,
-			Email:      user.Email,
-			Img:        user.Img,
-			Signature:  user.Signature,
-			Sex:        user.Sex,
-			Role:       user.Role,
-			Status:     user.Status,
-			CreateTime: user.CreateTime,
-			UpdateTime: user.UpdateTime,
+			Id:          user.Id,
+			Username:    user.Username,
+			Password:    user.Password,
+			Email:       user.Email,
+			Avatar:      user.Avatar,
+			Signature:   user.Signature,
+			Sex:         user.Sex,
+			Role:        user.Role,
+			Status:      user.Status,
+			LikeCount:   user.LikeCount,
+			FollowCount: user.FollowCount,
+			FansCount:   user.FansCount,
+			CreateTime:  user.CreateTime,
+			UpdateTime:  user.UpdateTime,
 		}
 
 		customCtx.Data["token"] = token

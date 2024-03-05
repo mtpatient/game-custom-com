@@ -22,9 +22,10 @@ type ImageDao struct {
 type ImageColumns struct {
 	Id         string //
 	Url        string // 图片地址
-	Type       string // 0：用户头像；1：帖子图片
+	Type       string // 0：用户头像；1：帖子图片; 2：意见反馈
 	Name       string //
 	PostId     string // 帖子图片
+	FeedbackId string // 反馈图片
 	CreateTime string //
 	UpdateTime string //
 	DeleteTime string //
@@ -37,6 +38,7 @@ var imageColumns = ImageColumns{
 	Type:       "type",
 	Name:       "name",
 	PostId:     "post_id",
+	FeedbackId: "feedback_id",
 	CreateTime: "create_time",
 	UpdateTime: "update_time",
 	DeleteTime: "delete_time",

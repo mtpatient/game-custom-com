@@ -9,8 +9,8 @@ type IImg interface {
 	GetSignatures(ctx context.Context, count int) ([]string, error)
 	Save(ctx context.Context, images []entity.Image) error
 	GetAllAvatar(ctx context.Context) ([]entity.Image, error)
-	GetImageById(ctx context.Context, count uint) (entity.Image, error)
-	DeleteAvatar(ctx context.Context, id uint) error
+	GetImageById(ctx context.Context, count int) (entity.Image, error)
+	DeleteAvatar(ctx context.Context, id int) error
 	Update(ctx context.Context, image entity.Image) error
 }
 

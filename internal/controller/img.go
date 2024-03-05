@@ -49,7 +49,7 @@ func (c *Img) GetAllAvatar(r *ghttp.Request) {
 func (c *Img) DeleteAvatar(r *ghttp.Request) {
 	id := r.Get("id")
 
-	err := service.Img().DeleteAvatar(r.Context(), id.Uint())
+	err := service.Img().DeleteAvatar(r.Context(), id.Int())
 
 	if err != nil {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))

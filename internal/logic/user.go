@@ -23,12 +23,49 @@ type (
 	}
 )
 
-func (s *sUser) UserRole(ctx context.Context) (int64, error) {
+func (s *sUser) ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error {
+	if rp.NewPwd != rp.ConfirmPwd {
+		return gerror.Newf(`The Password value "%s" must be the same as field repwd value "%s"`,
+			rp.ConfirmPwd, rp.NewPwd)
+	}
+	db := dao.User.Ctx(ctx)
+
+	one, err := db.Where("id", rp.Id).Where("password", rp.CurPwd).One()
+	if one == nil {
+		return gerror.New("当前密码错误")
+	}
+
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Where("id", rp.Id).OmitEmpty().Update(g.Map{
+		"password": rp.NewPwd,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *sUser) Update(ctx context.Context, user entity.User) error {
+	db := dao.User.Ctx(ctx)
+
+	_, err := db.OmitEmpty().Where("id", user.Id).Update(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *sUser) UserRole(ctx context.Context) (int, error) {
 	v := service.Context().Get(ctx)
 	if v == nil {
 		return 0, gerror.New("用户未登录")
 	}
-	return int64(v.User.Role), nil
+	return v.User.Role, nil
 }
 
 func (s *sUser) IsLogin(ctx context.Context) (bool, error) {
@@ -38,12 +75,12 @@ func (s *sUser) IsLogin(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (s *sUser) GetById(ctx context.Context, id int64) (entity.User, error) {
+func (s *sUser) GetById(ctx context.Context, id int) (entity.User, error) {
 	db := dao.User.Ctx(ctx)
 
 	var user entity.User
 
-	err := db.Where("id", id).Scan(&user)
+	err := db.FieldsEx("password").Where("id", id).Scan(&user)
 	if err != nil {
 		return user, err
 	}

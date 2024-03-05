@@ -39,7 +39,7 @@ func (s sImg) Update(ctx context.Context, image entity.Image) error {
 	return nil
 }
 
-func (s sImg) DeleteAvatar(ctx context.Context, id uint) error {
+func (s sImg) DeleteAvatar(ctx context.Context, id int) error {
 	Udb := dao.User.Ctx(ctx)
 	one, _ := Udb.One("img", id)
 	if one.IsEmpty() == false {
@@ -96,11 +96,11 @@ func (s sImg) GetAllAvatar(ctx context.Context) ([]entity.Image, error) {
 	return images, nil
 }
 
-func (s sImg) GetImageById(ctx context.Context, count uint) (entity.Image, error) {
+func (s sImg) GetImageById(ctx context.Context, id int) (entity.Image, error) {
 	db := dao.Image.Ctx(ctx)
 	var image entity.Image
 
-	err := db.Where("id", count).Scan(&image)
+	err := db.Where("id", id).Scan(&image)
 	if err != nil {
 		return image, err
 	}

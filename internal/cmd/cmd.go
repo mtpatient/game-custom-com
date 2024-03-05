@@ -30,13 +30,15 @@ var (
 			cImg := new(controller.Img)
 			cSection := new(controller.Section)
 			cPost := new(controller.Post)
+			cFeedback := new(controller.Feedback)
 			// 不鉴权
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.POST("/register", cUser.Register)
 				group.POST("/login", cUser.Login)
 				group.Group("/user", func(group *ghttp.RouterGroup) {
-					group.GET("/:username", cUser.NameExist)
+					group.GET("/name-exist/:username", cUser.NameExist)
 					group.GET("/is_login", cUser.IsLogin)
+					group.GET("/:id", cUser.GetUser)
 				})
 			})
 			// 鉴权: 普通用户
@@ -46,6 +48,8 @@ var (
 				)
 				group.Group("/user", func(group *ghttp.RouterGroup) {
 					group.GET("/logout", cUser.Logout)
+					group.PUT("/", cUser.Update)
+					group.POST("/password", cUser.ReplacePassword)
 				})
 				group.Group("/img", func(group *ghttp.RouterGroup) {
 					group.GET("/getSignature/:count", cImg.GetSignatures)
@@ -56,6 +60,9 @@ var (
 				})
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.POST("/", cPost.Add)
+				})
+				group.Group("/feedback", func(group *ghttp.RouterGroup) {
+					group.POST("/", cFeedback.Add)
 				})
 			})
 			// 鉴权: 管理员

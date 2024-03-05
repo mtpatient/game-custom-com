@@ -11,9 +11,11 @@ type IUser interface {
 	Login(ctx context.Context, user api.User) (entity.User, string, error)
 	Logout(ctx context.Context, token string) error
 	NameExist(ctx context.Context, username string) (bool, error)
-	GetById(ctx context.Context, id int64) (entity.User, error)
+	GetById(ctx context.Context, id int) (entity.User, error)
 	IsLogin(ctx context.Context) (bool, error)
-	UserRole(ctx context.Context) (int64, error)
+	UserRole(ctx context.Context) (int, error)
+	Update(ctx context.Context, user entity.User) error
+	ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error
 }
 
 var localUser IUser

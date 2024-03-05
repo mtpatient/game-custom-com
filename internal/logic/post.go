@@ -34,8 +34,6 @@ func (s sPost) Add(ctx context.Context, postAdd api.PostAdd) error {
 		if imgLen > 0 {
 			var images = make([]do.Image, imgLen)
 			for i := 0; i < imgLen; i++ {
-				//tx.Ctx(ctx).Raw("INSERT INTO image(url, type, post_id, create_time) VALUE(?, ?, ?, ?)",
-				//	img, 1, id, gtime.Now()).Insert()
 				images[i].Type = 1
 				images[i].Url = postAdd.Images[i]
 				images[i].PostId = id
