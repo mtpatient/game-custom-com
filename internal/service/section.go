@@ -9,6 +9,7 @@ type ISection interface {
 	Add(ctx context.Context, section entity.Section) error
 	Update(ctx context.Context, section entity.Section) error
 	GetAll(ctx context.Context) ([]entity.Section, error)
+	GetById(ctx context.Context, id int) (entity.Section, error)
 }
 
 var localSection ISection

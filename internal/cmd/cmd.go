@@ -40,6 +40,9 @@ var (
 					group.GET("/is_login", cUser.IsLogin)
 					group.GET("/:id", cUser.GetUser)
 				})
+				group.Group("/post", func(group *ghttp.RouterGroup) {
+					group.GET("/:id", cPost.GetPostById)
+				})
 			})
 			// 鉴权: 普通用户
 			s.Group("/", func(group *ghttp.RouterGroup) {

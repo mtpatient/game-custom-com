@@ -16,6 +16,18 @@ type sSection struct {
 func init() {
 	service.RegisterSection(&sSection{})
 }
+func (s sSection) GetById(ctx context.Context, id int) (entity.Section, error) {
+	db := dao.Section.Ctx(ctx)
+
+	var section entity.Section
+	err := db.Where("id", id).Scan(&section)
+
+	if err != nil {
+		return section, err
+	}
+
+	return section, nil
+}
 
 func (s sSection) GetAll(ctx context.Context) ([]entity.Section, error) {
 	db := dao.Section.Ctx(ctx)

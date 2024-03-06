@@ -7,6 +7,7 @@ import (
 
 type IPost interface {
 	Add(ctx context.Context, postAdd api.PostAdd) error
+	GetById(ctx context.Context, id int) (api.PostRes, error)
 }
 
 var localPost IPost

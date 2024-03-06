@@ -31,3 +31,14 @@ func (c *Post) Add(r *ghttp.Request) {
 
 	res.WriteJsonExit(utility.GetR())
 }
+
+func (c *Post) GetPostById(r *ghttp.Request) {
+	id := r.Get("id").Int()
+
+	post, err := service.Post().GetById(r.Context(), id)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("post", post.Post).PUT("comments", post.Comments))
+}
