@@ -17,10 +17,11 @@ const (
 redis 前缀
 */
 const (
-	TokenKey    = "game:token:"
-	TokenKeyTTL = 1800
-	LikeKey     = "like:post:"
-	UserKey     = "game:user:"
+	TokenKey      = "game:token:"
+	TokenKeyTTL   = 1800
+	LikeKey       = "like:post:"
+	UserKey       = "game:user:"
+	VerifyCodeKey = "game:verifyCode:"
 )
 
 const (

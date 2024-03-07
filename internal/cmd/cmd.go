@@ -39,6 +39,8 @@ var (
 					group.GET("/name-exist/:username", cUser.NameExist)
 					group.GET("/is_login", cUser.IsLogin)
 					group.GET("/:id", cUser.GetUser)
+					group.GET("/authCode/:username", cUser.GetAuthCode)
+					group.POST("/resetPwd", cUser.ResetPwd)
 				})
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.GET("/:id", cPost.GetPostById)

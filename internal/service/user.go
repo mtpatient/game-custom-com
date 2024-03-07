@@ -16,6 +16,8 @@ type IUser interface {
 	UserRole(ctx context.Context) (int, error)
 	Update(ctx context.Context, user entity.User) error
 	ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error
+	GetAuthCode(ctx context.Context, str string) error
+	ResetPwd(ctx context.Context, rs api.ResetPwd) error
 }
 
 var localUser IUser

@@ -6,6 +6,7 @@ type User struct {
 	Username string `json:"username" v:"required"   ` // 用户名
 	Password string `json:"password" v:"required"   ` // 密码
 	Repwd    string `json:"repwd"`                    // 重复输入密码
+	Email    string `json:"email" v:"email"`          // 邮箱
 }
 
 type UserRes struct {
@@ -28,6 +29,13 @@ type UserRes struct {
 type UserReplacePassword struct {
 	Id         int    `json:"user_id"`
 	CurPwd     string `json:"cur_pwd" v:"required"`
+	NewPwd     string `json:"new_pwd" v:"required"`
+	ConfirmPwd string `json:"confirm_pwd" v:"required"`
+}
+
+type ResetPwd struct {
+	Username   string `json:"username"`
+	Code       string `json:"code" v:"required"`
 	NewPwd     string `json:"new_pwd" v:"required"`
 	ConfirmPwd string `json:"confirm_pwd" v:"required"`
 }

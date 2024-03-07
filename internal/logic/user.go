@@ -9,8 +9,10 @@ import (
 	"game-custom-com/internal/model/do"
 	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
+	"game-custom-com/utility"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/util/grand"
 	"github.com/gogf/gf/v2/util/guid"
 )
 
@@ -22,6 +24,58 @@ type (
 	sUser struct {
 	}
 )
+
+func (s *sUser) ResetPwd(ctx context.Context, rs api.ResetPwd) error {
+	if rs.NewPwd != rs.ConfirmPwd {
+		return gerror.Newf(`The Password value "%s" must be the same as field repwd value "%s"`,
+			rs.ConfirmPwd, rs.NewPwd)
+	}
+	code, _ := g.Redis().Get(ctx, consts.VerifyCodeKey+rs.Username)
+
+	if code.String() != rs.Code {
+		return gerror.New("验证码错误")
+	}
+	db := dao.User.Ctx(ctx)
+
+	_, err := db.Where("username", rs.Username).OmitEmpty().Update(g.Map{
+		"password": rs.NewPwd,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *sUser) GetAuthCode(ctx context.Context, str string) error {
+	db := dao.User.Ctx(ctx)
+
+	one, err := db.Where("email", str).WhereOr("username", str).One()
+	if err != nil {
+		return err
+	}
+	if one == nil {
+		return gerror.Newf("%s 用户不存在", str)
+	}
+	// 生成6位数字验证码
+	code := grand.S(6)
+	content := "你的验证码为：<h1>" + code + "</h1> <p>有效期为5分钟。<p>"
+	var user entity.User
+	err = one.Struct(&user)
+	if err != nil {
+		return err
+	}
+	err = utility.SendEmail(content, []string{user.Email})
+	if err != nil {
+		return gerror.New("发送验证码失败，稍后再试!")
+	}
+	err = g.Redis().SetEX(ctx, consts.VerifyCodeKey+str, code, 300)
+	if err != nil {
+		return gerror.New("发送验证码失败，稍后再试!")
+	}
+
+	return nil
+}
 
 func (s *sUser) ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error {
 	if rp.NewPwd != rp.ConfirmPwd {
@@ -51,7 +105,10 @@ func (s *sUser) ReplacePassword(ctx context.Context, rp api.UserReplacePassword)
 
 func (s *sUser) Update(ctx context.Context, user entity.User) error {
 	db := dao.User.Ctx(ctx)
-
+	one, _ := db.Where("email", user.Email).WhereNot("id", user.Id).One()
+	if one != nil {
+		return gerror.Newf(`Email "%s" is already exist!`, user.Email)
+	}
 	_, err := db.OmitEmpty().Where("id", user.Id).Update(user)
 	if err != nil {
 		return err
@@ -114,9 +171,16 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 
 	db := dao.User.Ctx(ctx)
 
+	count, _ := db.Where("email", user.Email).Count()
+	if count != 0 {
+		return gerror.Newf(`Email "%s" is already exist!`, user.Email)
+	}
+
 	_, err = db.Insert(do.User{
 		Username: user.Username,
 		Password: user.Password,
+		Email:    user.Email,
+		Sex:      2,
 	})
 	if err != nil {
 		return err

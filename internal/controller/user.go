@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"game-custom-com/api"
 	"game-custom-com/internal/consts"
 	"game-custom-com/internal/model/entity"
@@ -147,6 +148,32 @@ func (c *User) ReplacePassword(r *ghttp.Request) {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
 	}
 	err = service.User().ReplacePassword(r.Context(), rp)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR())
+}
+
+func (c *User) GetAuthCode(r *ghttp.Request) {
+	username := r.Get("username")
+	fmt.Println(username.String())
+	err := service.User().GetAuthCode(r.Context(), username.String())
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR())
+}
+
+func (c *User) ResetPwd(r *ghttp.Request) {
+	var rs api.ResetPwd
+	err := r.Parse(&rs)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	err = service.User().ResetPwd(r.Context(), rs)
 	if err != nil {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
