@@ -45,6 +45,10 @@ var (
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.GET("/:id", cPost.GetPostById)
 				})
+				group.Group("/section", func(group *ghttp.RouterGroup) {
+					group.GET("/all", cSection.GetAll)
+					group.GET("/:id", cSection.GetById)
+				})
 			})
 			// 鉴权: 普通用户
 			s.Group("/", func(group *ghttp.RouterGroup) {
@@ -55,16 +59,16 @@ var (
 					group.GET("/logout", cUser.Logout)
 					group.PUT("/", cUser.Update)
 					group.POST("/password", cUser.ReplacePassword)
+					group.POST("/follow", cUser.Follow)
 				})
 				group.Group("/img", func(group *ghttp.RouterGroup) {
 					group.GET("/getSignature/:count", cImg.GetSignatures)
 					group.GET("/avatars", cImg.GetAllAvatar)
 				})
-				group.Group("/section", func(group *ghttp.RouterGroup) {
-					group.GET("/all", cSection.GetAll)
-				})
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.POST("/", cPost.Add)
+					group.POST("/like", cPost.Like)
+					group.POST("/collect", cPost.Collect)
 				})
 				group.Group("/feedback", func(group *ghttp.RouterGroup) {
 					group.POST("/", cFeedback.Add)

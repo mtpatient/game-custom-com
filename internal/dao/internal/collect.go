@@ -24,7 +24,7 @@ type CollectColumns struct {
 	UserId     string //
 	PostId     string //
 	CreateTime string //
-	UpdateTime string //
+	DeleteTime string //
 }
 
 // collectColumns holds the columns for table collect.
@@ -33,7 +33,7 @@ var collectColumns = CollectColumns{
 	UserId:     "user_id",
 	PostId:     "post_id",
 	CreateTime: "create_time",
-	UpdateTime: "update_time",
+	DeleteTime: "delete_time",
 }
 
 // NewCollectDao creates and returns a new DAO object for table data access.

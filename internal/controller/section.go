@@ -47,3 +47,14 @@ func (c *Section) GetAll(r *ghttp.Request) {
 	}
 	res.WriteJsonExit(utility.GetR().PUT("sections", all))
 }
+
+func (c *Section) GetById(r *ghttp.Request) {
+	id := r.Get("id")
+
+	section, err := service.Section().GetById(r.Context(), id.Int())
+	res := r.Response
+	if err != nil {
+		res.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	res.WriteJsonExit(utility.GetR().PUT("section", section))
+}

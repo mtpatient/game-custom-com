@@ -180,3 +180,18 @@ func (c *User) ResetPwd(r *ghttp.Request) {
 
 	r.Response.WriteJsonExit(utility.GetR())
 }
+
+func (c *User) Follow(r *ghttp.Request) {
+	var follow api.UserFollow
+
+	err := r.Parse(&follow)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	err = service.User().Follow(r.Context(), follow)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR())
+}

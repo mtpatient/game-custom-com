@@ -7,7 +7,23 @@ type PostAdd struct {
 	Images []string    `json:"images"`
 }
 
-type PostRes struct {
-	Post     entity.Post      `json:"post"`
-	Comments []entity.Comment `json:"comments"`
+type PostDetail struct {
+	Post      entity.Post      `json:"post"`
+	Comments  []entity.Comment `json:"comments"`
+	IsLike    int              `json:"is_like"`
+	IsCollect int              `json:"is_collect"`
+	IsFollow  int              `json:"is_follow"`
+}
+
+type PostLike struct {
+	PostId   int `json:"post_id" `
+	ToUserId int `json:"user_id" `
+	Operate  int `json:"operate" ` // like or unlike
+	Status   int `json:"status"`
+}
+
+type PostCollect struct {
+	PostId  int `json:"post_id" `
+	Operate int `json:"operate" ` // like or unlike
+	Status  int `json:"status"`
 }

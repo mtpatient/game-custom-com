@@ -10,6 +10,7 @@ import (
 	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
 	"game-custom-com/utility"
+	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/util/grand"
@@ -24,6 +25,56 @@ type (
 	sUser struct {
 	}
 )
+
+func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
+	uid := service.Context().Get(ctx).User.Id
+	if uid == follow.Id {
+		return gerror.New("不能关注自己")
+	}
+	err := dao.User.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		if follow.Operate == 1 {
+			_, err := tx.Ctx(ctx).Update("user", g.Map{
+				"follow_count": gdb.Raw("follow_count + 1"),
+			}, g.Map{
+				"id": uid,
+			})
+			if err != nil {
+				return err
+			}
+			_, err = tx.Ctx(ctx).Insert("follow", g.Map{
+				"user_id":        uid,
+				"follow_user_id": follow.Id,
+			})
+			if err != nil {
+				return err
+			}
+		} else if follow.Operate == 2 {
+			_, err := tx.Ctx(ctx).Update("user", g.Map{
+				"follow_count": gdb.Raw("follow_count - 1"),
+			}, g.Map{
+				"id": uid,
+			})
+			if err != nil {
+				return err
+			}
+			_, err = tx.Ctx(ctx).Delete("follow", g.Map{
+				"user_id":        uid,
+				"follow_user_id": follow.Id,
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			return gerror.New("参数错误")
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (s *sUser) ResetPwd(ctx context.Context, rs api.ResetPwd) error {
 	if rs.NewPwd != rs.ConfirmPwd {

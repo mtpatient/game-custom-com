@@ -16,5 +16,5 @@ type Collect struct {
 	UserId     interface{} //
 	PostId     interface{} //
 	CreateTime *gtime.Time //
-	UpdateTime *gtime.Time //
+	DeleteTime *gtime.Time //
 }

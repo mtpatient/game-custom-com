@@ -18,6 +18,7 @@ type IUser interface {
 	ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error
 	GetAuthCode(ctx context.Context, str string) error
 	ResetPwd(ctx context.Context, rs api.ResetPwd) error
+	Follow(ctx context.Context, follow api.UserFollow) error
 }
 
 var localUser IUser

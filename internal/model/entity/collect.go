@@ -14,5 +14,5 @@ type Collect struct {
 	UserId     int         `json:"user_id"     ` //
 	PostId     int         `json:"post_id"     ` //
 	CreateTime *gtime.Time `json:"create_time" ` //
-	UpdateTime *gtime.Time `json:"update_time" ` //
+	DeleteTime *gtime.Time `json:"delete_time" ` //
 }

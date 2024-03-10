@@ -40,5 +40,40 @@ func (c *Post) GetPostById(r *ghttp.Request) {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
 
-	r.Response.WriteJsonExit(utility.GetR().PUT("post", post.Post).PUT("comments", post.Comments))
+	r.Response.WriteJsonExit(utility.GetR().PUT("post", post.Post).PUT("comments", post.Comments).PUT("is_like", post.IsLike).
+		PUT("is_collect", post.IsCollect).PUT("is_follow", post.IsFollow))
+}
+
+func (c *Post) Like(r *ghttp.Request) {
+	var postLike api.PostLike
+
+	err := r.Parse(&postLike)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	err = service.Post().Like(r.Context(), postLike)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR())
+}
+
+func (c *Post) Collect(r *ghttp.Request) {
+	var postCollect api.PostCollect
+
+	err := r.Parse(&postCollect)
+
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	err = service.Post().Collect(r.Context(), postCollect)
+
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR())
 }

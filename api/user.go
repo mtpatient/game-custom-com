@@ -39,3 +39,8 @@ type ResetPwd struct {
 	NewPwd     string `json:"new_pwd" v:"required"`
 	ConfirmPwd string `json:"confirm_pwd" v:"required"`
 }
+
+type UserFollow struct {
+	Id      int `json:"id"`
+	Operate int `json:"operate"` // 2：取消关注，1：关注
+}
