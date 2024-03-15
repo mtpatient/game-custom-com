@@ -18,5 +18,6 @@ type Like struct {
 	CommentId  interface{} //
 	PraiseId   interface{} // 被赞人
 	CreateTime *gtime.Time //
+	UpdateTime *gtime.Time //
 	DeleteTime *gtime.Time //
 }

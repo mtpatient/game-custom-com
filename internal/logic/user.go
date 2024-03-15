@@ -33,7 +33,14 @@ func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 	}
 	err := dao.User.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		if follow.Operate == 1 {
-			_, err := tx.Ctx(ctx).Update("user", g.Map{
+			// 判断是否已经关注
+			one, err := tx.Ctx(ctx).GetOne("Select * From `follow` where user_id=? and follow_user_id=? and delete_time is null limit 1", uid, follow.Id)
+
+			if one != nil && err == nil {
+				return gerror.New("已经关注了")
+			}
+
+			_, err = tx.Ctx(ctx).Update("user", g.Map{
 				"follow_count": gdb.Raw("follow_count + 1"),
 			}, g.Map{
 				"id": uid,
@@ -41,6 +48,16 @@ func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 			if err != nil {
 				return err
 			}
+
+			_, err = tx.Ctx(ctx).Update("user", g.Map{
+				"fans_count": gdb.Raw("fans_count+1"),
+			}, g.Map{
+				"id": follow.Id,
+			})
+			if err != nil {
+				return err
+			}
+
 			_, err = tx.Ctx(ctx).Insert("follow", g.Map{
 				"user_id":        uid,
 				"follow_user_id": follow.Id,
@@ -49,7 +66,13 @@ func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 				return err
 			}
 		} else if follow.Operate == 2 {
-			_, err := tx.Ctx(ctx).Update("user", g.Map{
+			one, err := tx.Ctx(ctx).GetOne("Select * From `follow` where user_id=? and follow_user_id=? and delete_time is null limit 1", uid, follow.Id)
+
+			if one == nil || err != nil {
+				return gerror.New("没有关注")
+			}
+
+			_, err = tx.Ctx(ctx).Update("user", g.Map{
 				"follow_count": gdb.Raw("follow_count - 1"),
 			}, g.Map{
 				"id": uid,
@@ -57,6 +80,16 @@ func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 			if err != nil {
 				return err
 			}
+
+			_, err = tx.Ctx(ctx).Update("user", g.Map{
+				"fans_count": gdb.Raw("fans_count-1"),
+			}, g.Map{
+				"id": follow.Id,
+			})
+			if err != nil {
+				return err
+			}
+
 			_, err = tx.Ctx(ctx).Delete("follow", g.Map{
 				"user_id":        uid,
 				"follow_user_id": follow.Id,
@@ -70,7 +103,8 @@ func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("关注失败")
 	}
 
 	return nil
@@ -92,7 +126,14 @@ func (s *sUser) ResetPwd(ctx context.Context, rs api.ResetPwd) error {
 		"password": rs.NewPwd,
 	})
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("修改密码失败")
+	}
+
+	_, err = g.Redis().Del(ctx, consts.VerifyCodeKey+rs.Username)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return gerror.New("删除验证码失败")
 	}
 
 	return nil
@@ -129,6 +170,10 @@ func (s *sUser) GetAuthCode(ctx context.Context, str string) error {
 }
 
 func (s *sUser) ReplacePassword(ctx context.Context, rp api.UserReplacePassword) error {
+	uid := service.Context().Get(ctx).User.Id
+	if uid != rp.Id {
+		return gerror.New("无权限")
+	}
 	if rp.NewPwd != rp.ConfirmPwd {
 		return gerror.Newf(`The Password value "%s" must be the same as field repwd value "%s"`,
 			rp.ConfirmPwd, rp.NewPwd)
@@ -141,39 +186,56 @@ func (s *sUser) ReplacePassword(ctx context.Context, rp api.UserReplacePassword)
 	}
 
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，修改密码失败")
 	}
 
 	_, err = db.Where("id", rp.Id).OmitEmpty().Update(g.Map{
 		"password": rp.NewPwd,
 	})
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，修改密码失败")
 	}
 
 	return nil
 }
 
 func (s *sUser) Update(ctx context.Context, user entity.User) error {
+	uid := service.Context().Get(ctx).User.Id
+	if uid != user.Id {
+		return gerror.New("无权限")
+	}
 	db := dao.User.Ctx(ctx)
-	one, _ := db.Where("email", user.Email).WhereNot("id", user.Id).One()
+
+	one, err := db.Where("username", user.Username).WhereNot("id", user.Id).One()
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，更新用户失败")
+	}
+	if one != nil {
+		return gerror.Newf(`Username "%s" is already exist!`, user.Username)
+	}
+
+	one, _ = db.Where("email", user.Email).WhereNot("id", user.Id).One()
 	if one != nil {
 		return gerror.Newf(`Email "%s" is already exist!`, user.Email)
 	}
-	_, err := db.OmitEmpty().Where("id", user.Id).Update(user)
+	_, err = db.OmitEmpty().Where("id", user.Id).Update(user)
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，更新用户失败")
 	}
 
 	return nil
 }
 
 func (s *sUser) UserRole(ctx context.Context) (int, error) {
-	v := service.Context().Get(ctx)
-	if v == nil {
+	user := service.Context().Get(ctx).User
+	if user == nil {
 		return 0, gerror.New("用户未登录")
 	}
-	return v.User.Role, nil
+	return user.Role, nil
 }
 
 func (s *sUser) IsLogin(ctx context.Context) (bool, error) {
@@ -190,7 +252,8 @@ func (s *sUser) GetById(ctx context.Context, id int) (entity.User, error) {
 
 	err := db.FieldsEx("password").Where("id", id).Scan(&user)
 	if err != nil {
-		return user, err
+		g.Log().Error(ctx, err)
+		return user, gerror.New("服务器错误，获取用户失败")
 	}
 
 	return user, nil
@@ -202,7 +265,8 @@ func (s *sUser) NameExist(ctx context.Context, username string) (bool, error) {
 	count, err := db.Where("username", username).Count()
 
 	if err != nil {
-		return false, err
+		g.Log().Error(ctx, err)
+		return false, gerror.New("服务器错误，获取用户失败")
 	}
 	return count != 0, nil
 }
@@ -214,7 +278,8 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 	}
 	exist, err := s.NameExist(ctx, user.Username)
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，注册失败！")
 	}
 	if exist {
 		return gerror.Newf(`Username "%s" is already exist!`, user.Username)
@@ -234,7 +299,8 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 		Sex:      2,
 	})
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("服务器错误，注册失败！")
 	}
 	return nil
 }
@@ -260,7 +326,8 @@ func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, 
 	}).FieldsEx("password").Scan(&u)
 
 	if err != nil {
-		return u, "", err
+		g.Log().Error(ctx, err)
+		return u, "", gerror.New("服务器错误！")
 	}
 
 	if u.Id > 0 {
@@ -279,7 +346,8 @@ func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, 
 func (s *sUser) Logout(ctx context.Context, token string) error {
 	_, err := g.Redis().Del(ctx, consts.TokenKey+token)
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("Logout Error!")
 	}
 	return nil
 }

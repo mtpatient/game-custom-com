@@ -22,9 +22,11 @@ type MessageDao struct {
 type MessageColumns struct {
 	Id         string //
 	UserId     string //
-	ReciveId   string // 接收消息的用户;为空的话则为管理员向全体用户发布的通知
-	Type       string // 0：网站通知；1：回复我的；2：给我点赞的；3：@我的
+	ReceiveId  string // 接收消息的用户;为空的话则为管理员向全体用户发布的通知
+	Type       string // 0：网站通知；1：回复我的；2：给我点赞的；
 	Content    string // 消息内容
+	CommentId  string //
+	PostId     string //
 	IsRead     string // 0：未读；1：已读
 	CreateTime string //
 	UpdateTime string //
@@ -35,9 +37,11 @@ type MessageColumns struct {
 var messageColumns = MessageColumns{
 	Id:         "id",
 	UserId:     "user_id",
-	ReciveId:   "recive_id",
+	ReceiveId:  "receive_id",
 	Type:       "type",
 	Content:    "content",
+	CommentId:  "comment_id",
+	PostId:     "post_id",
 	IsRead:     "is_read",
 	CreateTime: "create_time",
 	UpdateTime: "update_time",

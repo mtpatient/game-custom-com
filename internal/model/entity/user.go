@@ -15,7 +15,7 @@ type User struct {
 	Password    string      `json:"password"     ` // 密码
 	Email       string      `json:"email"        ` // 邮箱，可通过邮箱找回密码
 	Avatar      int         `json:"avatar"       ` // 头像id
-	Sex         int         `json:"sex"          ` // 0：女，1：男；2：保密
+	Sex         int         `json:"sex"          ` // 2：女，1：男；3：保密
 	Signature   string      `json:"signature"    ` // 个性签名
 	Role        int         `json:"role"         ` // 管理员：1，,普通用户：0
 	Status      int         `json:"status"       ` // 用户所处状态，0为正常，1为被封禁

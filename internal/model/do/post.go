@@ -20,6 +20,7 @@ type Post struct {
 	ViewCount    interface{} // 浏览数
 	LikeCount    interface{} // 点赞数
 	CollectCount interface{} // 被收藏数
+	IsTop        interface{} // 是否置顶
 	Status       interface{} // 0：正常，1：禁用，2：仅自己可见，3：申请恢复
 	CreateTime   *gtime.Time //
 	UpdateTime   *gtime.Time //

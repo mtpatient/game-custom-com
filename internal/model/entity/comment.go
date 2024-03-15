@@ -13,11 +13,13 @@ type Comment struct {
 	Id         int         `json:"id"          ` //
 	PostId     int         `json:"post_id"     ` //
 	UserId     int         `json:"user_id"     ` //
-	ReplayId   int         `json:"replay_id"   ` // 被评论者
-	Floor      int         `json:"floor"       ` // 1为楼主；评论从2开始；0为楼中楼
+	ReplyId    int         `json:"reply_id"    ` // 被评论者
+	Floor      int         `json:"floor"       ` // 评论从1开始；0为楼中楼
+	ParentId   int         `json:"parent_id"   ` //
 	Content    string      `json:"content"     ` //
 	LikeCount  int         `json:"like_count"  ` //
 	Status     int         `json:"status"      ` // 0为正常；1为被删除
 	CreateTime *gtime.Time `json:"create_time" ` //
+	UpdateTime *gtime.Time `json:"update_time" ` //
 	DeleteTime *gtime.Time `json:"delete_time" ` //
 }

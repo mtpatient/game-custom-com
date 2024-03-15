@@ -17,7 +17,7 @@ type User struct {
 	Password    interface{} // 密码
 	Email       interface{} // 邮箱，可通过邮箱找回密码
 	Avatar      interface{} // 头像id
-	Sex         interface{} // 0：女，1：男；2：保密
+	Sex         interface{} // 2：女，1：男；3：保密
 	Signature   interface{} // 个性签名
 	Role        interface{} // 管理员：1，,普通用户：0
 	Status      interface{} // 用户所处状态，0为正常，1为被封禁

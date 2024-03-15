@@ -8,11 +8,11 @@ type PostAdd struct {
 }
 
 type PostDetail struct {
-	Post      entity.Post      `json:"post"`
-	Comments  []entity.Comment `json:"comments"`
-	IsLike    int              `json:"is_like"`
-	IsCollect int              `json:"is_collect"`
-	IsFollow  int              `json:"is_follow"`
+	Post         entity.Post `json:"post"`
+	IsLike       int         `json:"is_like"`
+	IsCollect    int         `json:"is_collect"`
+	IsFollow     int         `json:"is_follow"`
+	CommentCount int         `json:"comment_count"`
 }
 
 type PostLike struct {

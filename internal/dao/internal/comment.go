@@ -23,12 +23,14 @@ type CommentColumns struct {
 	Id         string //
 	PostId     string //
 	UserId     string //
-	ReplayId   string // 被评论者
-	Floor      string // 1为楼主；评论从2开始；0为楼中楼
+	ReplyId    string // 被评论者
+	Floor      string // 评论从1开始；0为楼中楼
+	ParentId   string //
 	Content    string //
 	LikeCount  string //
 	Status     string // 0为正常；1为被删除
 	CreateTime string //
+	UpdateTime string //
 	DeleteTime string //
 }
 
@@ -37,12 +39,14 @@ var commentColumns = CommentColumns{
 	Id:         "id",
 	PostId:     "post_id",
 	UserId:     "user_id",
-	ReplayId:   "replay_id",
+	ReplyId:    "reply_id",
 	Floor:      "floor",
+	ParentId:   "parent_id",
 	Content:    "content",
 	LikeCount:  "like_count",
 	Status:     "status",
 	CreateTime: "create_time",
+	UpdateTime: "update_time",
 	DeleteTime: "delete_time",
 }
 

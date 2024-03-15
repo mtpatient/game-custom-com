@@ -15,6 +15,7 @@ type Section struct {
 	Id         interface{} //
 	Name       interface{} //
 	Dc         interface{} // 描述
+	Role       interface{} // 该板块所属用户，0：普通用户，1：仅管理员用户
 	Icon       interface{} // url链接
 	CreateTime *gtime.Time //
 	UpdateTime *gtime.Time //

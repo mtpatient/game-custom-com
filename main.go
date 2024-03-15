@@ -11,6 +11,9 @@ import (
 	"game-custom-com/internal/cmd"
 )
 
+// @title Game Custom API
+// @version 1.0
+// @description 个人游戏社区后端接口
 func main() {
 	cmd.Main.Run(gctx.GetInitCtx())
 }

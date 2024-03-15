@@ -40,8 +40,8 @@ func (c *Post) GetPostById(r *ghttp.Request) {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
 
-	r.Response.WriteJsonExit(utility.GetR().PUT("post", post.Post).PUT("comments", post.Comments).PUT("is_like", post.IsLike).
-		PUT("is_collect", post.IsCollect).PUT("is_follow", post.IsFollow))
+	r.Response.WriteJsonExit(utility.GetR().PUT("post", post.Post).PUT("is_like", post.IsLike).
+		PUT("is_collect", post.IsCollect).PUT("is_follow", post.IsFollow).PUT("comment_count", post.CommentCount))
 }
 
 func (c *Post) Like(r *ghttp.Request) {

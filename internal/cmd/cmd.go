@@ -31,6 +31,8 @@ var (
 			cSection := new(controller.Section)
 			cPost := new(controller.Post)
 			cFeedback := new(controller.Feedback)
+			cFollow := new(controller.Follow)
+			cComment := new(controller.Comment)
 			// 不鉴权
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.POST("/register", cUser.Register)
@@ -48,6 +50,9 @@ var (
 				group.Group("/section", func(group *ghttp.RouterGroup) {
 					group.GET("/all", cSection.GetAll)
 					group.GET("/:id", cSection.GetById)
+				})
+				group.Group("/comment", func(group *ghttp.RouterGroup) {
+					group.POST("/getPostCommentList", cComment.GetPostCommentList)
 				})
 			})
 			// 鉴权: 普通用户
@@ -72,6 +77,14 @@ var (
 				})
 				group.Group("/feedback", func(group *ghttp.RouterGroup) {
 					group.POST("/", cFeedback.Add)
+				})
+				group.Group("/follow", func(group *ghttp.RouterGroup) {
+					group.GET("/isFollow/:id", cFollow.IsFollow)
+				})
+				group.Group("/comment", func(group *ghttp.RouterGroup) {
+					group.POST("/", cComment.Add)
+					group.DELETE("/:id", cComment.Del)
+					group.POST("/like", cComment.Like)
 				})
 			})
 			// 鉴权: 管理员

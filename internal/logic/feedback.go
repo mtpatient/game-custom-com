@@ -7,6 +7,8 @@ import (
 	"game-custom-com/internal/model/do"
 	"game-custom-com/internal/service"
 	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
 )
 
 type sFeedback struct {
@@ -37,7 +39,8 @@ func (s sFeedback) Create(ctx context.Context, add api.FeedbackAdd) error {
 	})
 
 	if err != nil {
-		return err
+		g.Log().Error(ctx, err)
+		return gerror.New("创建失败")
 	}
 
 	return nil

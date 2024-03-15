@@ -10,6 +10,7 @@ import (
 	"game-custom-com/internal/service"
 	"game-custom-com/utility"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/util/guid"
 	"strconv"
 	"time"
@@ -31,8 +32,9 @@ func (s sImg) Update(ctx context.Context, image entity.Image) error {
 	})
 	jsonData, _ := json.Marshal(image)
 	if err != nil {
-		service.AdmLog().Save(ctx, consts.LogError, "更新图片失败！"+string(jsonData))
-		return err
+		service.AdmLog().Save(ctx, consts.LogError, "更新图片失败！"+string(jsonData)+err.Error())
+		g.Log().Error(ctx, err)
+		return gerror.New("更新图片失败！")
 	}
 
 	service.AdmLog().Save(ctx, consts.LogSuccess, "更新图片成功！"+string(jsonData))
@@ -43,7 +45,7 @@ func (s sImg) DeleteAvatar(ctx context.Context, id int) error {
 	Udb := dao.User.Ctx(ctx)
 	one, _ := Udb.One("img", id)
 	if one.IsEmpty() == false {
-		service.AdmLog().Save(ctx, consts.LogError, "头像已有用户使用！无法删除："+strconv.Itoa(int(id)))
+		service.AdmLog().Save(ctx, consts.LogError, "头像已有用户使用！无法删除："+strconv.Itoa(id))
 		return gerror.New("该头像已有用户使用！")
 	}
 
@@ -51,11 +53,12 @@ func (s sImg) DeleteAvatar(ctx context.Context, id int) error {
 
 	_, err := Idb.Delete("id", id)
 	if err != nil {
-		service.AdmLog().Save(ctx, consts.LogError, "删除头像失败："+strconv.Itoa(int(id)))
-		return err
+		service.AdmLog().Save(ctx, consts.LogError, "删除头像失败："+strconv.Itoa(id)+err.Error())
+		g.Log().Error(ctx, err)
+		return gerror.New("删除头像失败！")
 	}
 
-	service.AdmLog().Save(ctx, consts.LogSuccess, "删除头像成功："+strconv.Itoa(int(id)))
+	service.AdmLog().Save(ctx, consts.LogSuccess, "删除头像成功："+strconv.Itoa(id))
 	return nil
 }
 
@@ -77,8 +80,9 @@ func (s sImg) Save(ctx context.Context, images []entity.Image) error {
 	_, err := db.Insert(images)
 	jsonData, _ := json.Marshal(images)
 	if err != nil {
-		service.AdmLog().Save(ctx, consts.LogError, "保存图片失败！:"+string(jsonData))
-		return err
+		service.AdmLog().Save(ctx, consts.LogError, "保存图片失败！:"+string(jsonData)+err.Error())
+		g.Log().Error(ctx, err)
+		return gerror.New("保存图片失败！")
 	}
 	service.AdmLog().Save(ctx, consts.LogSuccess, "保存图片成功！:"+string(jsonData))
 	return nil
@@ -90,7 +94,8 @@ func (s sImg) GetAllAvatar(ctx context.Context) ([]entity.Image, error) {
 
 	err := db.Where("type", 0).Scan(&images)
 	if err != nil {
-		return nil, err
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取头像失败！")
 	}
 
 	return images, nil
@@ -102,7 +107,8 @@ func (s sImg) GetImageById(ctx context.Context, id int) (entity.Image, error) {
 
 	err := db.Where("id", id).Scan(&image)
 	if err != nil {
-		return image, err
+		g.Log().Error(ctx, err)
+		return image, gerror.New("获取图片失败！")
 	}
 
 	return image, nil

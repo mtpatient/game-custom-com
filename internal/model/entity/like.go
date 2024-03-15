@@ -16,5 +16,6 @@ type Like struct {
 	CommentId  int         `json:"comment_id"  ` //
 	PraiseId   int         `json:"praise_id"   ` // 被赞人
 	CreateTime *gtime.Time `json:"create_time" ` //
+	UpdateTime *gtime.Time `json:"update_time" ` //
 	DeleteTime *gtime.Time `json:"delete_time" ` //
 }

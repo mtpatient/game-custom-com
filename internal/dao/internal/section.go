@@ -23,6 +23,7 @@ type SectionColumns struct {
 	Id         string //
 	Name       string //
 	Dc         string // 描述
+	Role       string // 该板块所属用户，0：普通用户，1：仅管理员用户
 	Icon       string // url链接
 	CreateTime string //
 	UpdateTime string //
@@ -34,6 +35,7 @@ var sectionColumns = SectionColumns{
 	Id:         "id",
 	Name:       "name",
 	Dc:         "dc",
+	Role:       "role",
 	Icon:       "icon",
 	CreateTime: "create_time",
 	UpdateTime: "update_time",

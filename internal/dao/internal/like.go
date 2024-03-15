@@ -26,6 +26,7 @@ type LikeColumns struct {
 	CommentId  string //
 	PraiseId   string // 被赞人
 	CreateTime string //
+	UpdateTime string //
 	DeleteTime string //
 }
 
@@ -37,6 +38,7 @@ var likeColumns = LikeColumns{
 	CommentId:  "comment_id",
 	PraiseId:   "praise_id",
 	CreateTime: "create_time",
+	UpdateTime: "update_time",
 	DeleteTime: "delete_time",
 }
 

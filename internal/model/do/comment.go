@@ -15,11 +15,13 @@ type Comment struct {
 	Id         interface{} //
 	PostId     interface{} //
 	UserId     interface{} //
-	ReplayId   interface{} // 被评论者
-	Floor      interface{} // 1为楼主；评论从2开始；0为楼中楼
+	ReplyId    interface{} // 被评论者
+	Floor      interface{} // 评论从1开始；0为楼中楼
+	ParentId   interface{} //
 	Content    interface{} //
 	LikeCount  interface{} //
 	Status     interface{} // 0为正常；1为被删除
 	CreateTime *gtime.Time //
+	UpdateTime *gtime.Time //
 	DeleteTime *gtime.Time //
 }

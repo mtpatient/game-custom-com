@@ -25,7 +25,7 @@ type UserColumns struct {
 	Password    string // 密码
 	Email       string // 邮箱，可通过邮箱找回密码
 	Avatar      string // 头像id
-	Sex         string // 0：女，1：男；2：保密
+	Sex         string // 2：女，1：男；3：保密
 	Signature   string // 个性签名
 	Role        string // 管理员：1，,普通用户：0
 	Status      string // 用户所处状态，0为正常，1为被封禁

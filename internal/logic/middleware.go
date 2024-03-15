@@ -22,8 +22,9 @@ func init() {
 
 func (s sMiddleware) AuthAdm(r *ghttp.Request) {
 	role, err := service.User().UserRole(r.Context())
+	g.Log().Info(r.Context(), role, "管理员鉴权")
 	if err != nil || role == 0 {
-		r.Response.WriteStatus(http.StatusForbidden)
+		r.Response.WriteStatusExit(http.StatusForbidden)
 	}
 	r.Middleware.Next()
 }
@@ -89,7 +90,7 @@ func (s sMiddleware) Auth(r *ghttp.Request) {
 	if ok, _ := service.User().IsLogin(r.Context()); ok {
 		r.Middleware.Next()
 	} else {
-		r.Response.WriteStatus(http.StatusForbidden)
+		r.Response.WriteStatusExit(http.StatusForbidden)
 	}
 }
 

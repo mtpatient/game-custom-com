@@ -28,6 +28,7 @@ type PostColumns struct {
 	ViewCount    string // 浏览数
 	LikeCount    string // 点赞数
 	CollectCount string // 被收藏数
+	IsTop        string // 是否置顶
 	Status       string // 0：正常，1：禁用，2：仅自己可见，3：申请恢复
 	CreateTime   string //
 	UpdateTime   string //
@@ -44,6 +45,7 @@ var postColumns = PostColumns{
 	ViewCount:    "view_count",
 	LikeCount:    "like_count",
 	CollectCount: "collect_count",
+	IsTop:        "is_top",
 	Status:       "status",
 	CreateTime:   "create_time",
 	UpdateTime:   "update_time",
