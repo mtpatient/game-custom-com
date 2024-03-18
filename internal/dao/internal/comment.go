@@ -24,6 +24,7 @@ type CommentColumns struct {
 	PostId     string //
 	UserId     string //
 	ReplyId    string // 被评论者
+	CommentId  string //
 	Floor      string // 评论从1开始；0为楼中楼
 	ParentId   string //
 	Content    string //
@@ -40,6 +41,7 @@ var commentColumns = CommentColumns{
 	PostId:     "post_id",
 	UserId:     "user_id",
 	ReplyId:    "reply_id",
+	CommentId:  "comment_id",
 	Floor:      "floor",
 	ParentId:   "parent_id",
 	Content:    "content",

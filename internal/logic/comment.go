@@ -84,7 +84,7 @@ func (s sComment) GetPostCommentList(ctx context.Context, get api.PostCommentGet
 		db = db.Order("create_time desc")
 	}
 
-	err := db.Limit(get.PageSize*(get.PageIndex-1), get.PageSize*get.PageIndex).Scan(&res)
+	err := db.Order("id asc").Limit(get.PageSize*(get.PageIndex-1), get.PageSize).Scan(&res)
 	if err != nil {
 		g.Log().Error(ctx, err)
 		return nil, gerror.New("获取评论列表失败")
@@ -125,6 +125,7 @@ func (s sComment) Add(ctx context.Context, add api.CommentAdd) error {
 			"content":    add.Content,
 			"floor":      floor,
 			"reply_id":   add.ToUserId,
+			"comment_id": add.CommentId,
 			"parent_id":  add.ParentId,
 			"like_count": 0,
 			"status":     0,

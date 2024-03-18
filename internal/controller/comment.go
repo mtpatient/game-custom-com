@@ -14,6 +14,7 @@ type Comment struct {
 
 func (c *Comment) Add(r *ghttp.Request) {
 	var commentAdd api.CommentAdd
+
 	err := r.Parse(&commentAdd)
 	if err != nil {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))

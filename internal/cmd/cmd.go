@@ -46,6 +46,7 @@ var (
 				})
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.GET("/:id", cPost.GetPostById)
+					group.POST("/getMine", cPost.GetMinePost)
 				})
 				group.Group("/section", func(group *ghttp.RouterGroup) {
 					group.GET("/all", cSection.GetAll)
@@ -53,6 +54,10 @@ var (
 				})
 				group.Group("/comment", func(group *ghttp.RouterGroup) {
 					group.POST("/getPostCommentList", cComment.GetPostCommentList)
+				})
+				group.Group("/follow", func(group *ghttp.RouterGroup) {
+					group.GET("/list/:id", cFollow.GetFollowList)
+					group.POST("/fans", cFollow.FansList)
 				})
 			})
 			// 鉴权: 普通用户
@@ -74,6 +79,9 @@ var (
 					group.POST("/", cPost.Add)
 					group.POST("/like", cPost.Like)
 					group.POST("/collect", cPost.Collect)
+					group.DELETE("/:id", cPost.Del)
+					group.POST("/top", cPost.Top)
+					group.PUT("/", cPost.Update)
 				})
 				group.Group("/feedback", func(group *ghttp.RouterGroup) {
 					group.POST("/", cFeedback.Add)

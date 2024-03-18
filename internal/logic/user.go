@@ -292,11 +292,15 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 		return gerror.Newf(`Email "%s" is already exist!`, user.Email)
 	}
 
+	array, err := dao.Image.Ctx(ctx).Fields("id").Where("type", 0).Array()
+	random := grand.Intn(len(array) - 1)
+
 	_, err = db.Insert(do.User{
 		Username: user.Username,
 		Password: user.Password,
 		Email:    user.Email,
-		Sex:      2,
+		Avatar:   array[random].Int(),
+		Sex:      3,
 	})
 	if err != nil {
 		g.Log().Error(ctx, err)

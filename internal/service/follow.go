@@ -1,9 +1,14 @@
 package service
 
-import "context"
+import (
+	"context"
+	"game-custom-com/api"
+)
 
 type IFollow interface {
 	IsFollow(ctx context.Context, id int) bool
+	GetFollowList(ctx context.Context, i int) ([]api.FollowVo, error)
+	GetFansList(ctx context.Context, get api.FansGet) ([]api.FansVo, error)
 }
 
 var localFollow IFollow

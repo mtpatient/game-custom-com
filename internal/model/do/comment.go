@@ -16,6 +16,7 @@ type Comment struct {
 	PostId     interface{} //
 	UserId     interface{} //
 	ReplyId    interface{} // 被评论者
+	CommentId  interface{} //
 	Floor      interface{} // 评论从1开始；0为楼中楼
 	ParentId   interface{} //
 	Content    interface{} //

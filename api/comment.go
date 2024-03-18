@@ -5,11 +5,12 @@ import (
 )
 
 type CommentAdd struct {
-	Content  string `json:"content"`
-	IsFloor  bool   `json:"is_floor"`
-	ParentId int    `json:"parent_id"`
-	PostId   int    `json:"post_id"`
-	ToUserId int    `json:"to_user_id"`
+	Content   string `json:"content"`
+	IsFloor   bool   `json:"is_floor"`
+	ParentId  int    `json:"parent_id"`
+	PostId    int    `json:"post_id"`
+	ToUserId  int    `json:"to_user_id"`
+	CommentId int    `json:"comment_id"`
 }
 
 type CommentVo struct {

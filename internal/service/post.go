@@ -6,10 +6,14 @@ import (
 )
 
 type IPost interface {
-	Add(ctx context.Context, postAdd api.PostAdd) error
+	Add(ctx context.Context, postAdd api.PostAdd) (int, error)
 	GetById(ctx context.Context, id int) (api.PostDetail, error)
 	Like(ctx context.Context, like api.PostLike) error
 	Collect(ctx context.Context, collect api.PostCollect) error
+	GetMinePost(ctx context.Context, get api.GetMinePost) ([]api.PostVo, error)
+	Top(ctx context.Context, top api.TopPost) error
+	Del(ctx context.Context, id int) error
+	Update(ctx context.Context, update api.PostAdd) error
 }
 
 var localPost IPost

@@ -8,8 +8,10 @@ import (
 	"game-custom-com/internal/dao"
 	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
+	"game-custom-com/utility"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/text/gstr"
 	"os"
 	"testing"
 )
@@ -174,4 +176,80 @@ func TestWithSelect(t *testing.T) {
 	}
 
 	fmt.Println(comment)
+}
+
+func TestImgMap(t *testing.T) {
+	ctx := context.Background()
+	var users []api.FollowVo
+	array, err := dao.Follow.Ctx(ctx).Where("user_id", 14).Fields("follow_user_id").Array()
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return
+	}
+	err = g.DB().Model("user").LeftJoin("image", "image.id = user.avatar").
+		Fields("user.id, user.username, user.signature, image.url as avatar").WhereIn("user.id", array).Scan(&users)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return
+	}
+	for i := 0; i < len(users); i++ {
+		fmt.Println(users[i])
+	}
+}
+
+func TestStringsDifferent(t *testing.T) {
+	arr1 := []string{"1", "2", "3", "5", "6"}
+	arr2 := []string{"4", "5", "6", "7", "8"}
+
+	diff1, diff2 := stringsDifference(arr1, arr2)
+
+	fmt.Println("diff1", diff1)
+	fmt.Println("diff2", diff2)
+}
+
+func stringsDifference(arr1, arr2 []string) (diff1, diff2 []string) {
+	// 创建两个map分别记录arr1和arr2中的元素
+	countMap1 := make(map[string]bool)
+	countMap2 := make(map[string]bool)
+	for _, val := range arr1 {
+		countMap1[val] = true
+	}
+	for _, val := range arr2 {
+		countMap2[val] = true
+	}
+
+	// 遍历arr1，如果元素在map2中不存在，则加入差集1
+	for _, val := range arr1 {
+		if !countMap2[val] {
+			diff1 = append(diff1, val)
+		}
+	}
+
+	// 遍历arr2，如果元素在map1中不存在，则加入差集2
+	for _, val := range arr2 {
+		if !countMap1[val] {
+			diff2 = append(diff2, val)
+		}
+	}
+
+	return diff1, diff2
+}
+
+func TestSubString(t *testing.T) {
+	url := "https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/img/2024-03-18/x584fc0wxk0czwl9zyfzmjg10032g4lv"
+
+	str := gstr.ReplaceI(url, "https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/", "")
+	fmt.Println(str)
+}
+
+func TestCosDel(t *testing.T) {
+	keys := []string{"https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/img/2024-02-29/1a0j290cws0czharmrhtqi01002mo278",
+		"https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/img/2024-02-18/1a0j290irg0cz87m3lpj594740d6cl59",
+		"https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/img/2024-02-18/1a0j290irg0cz889zchpdzg79042sfu2",
+		"https://game-custom-1312933264.cos.ap-guangzhou.myqcloud.com/img/2024-02-18/1a0j290irg0cz87np6she5075016476f"}
+
+	err := utility.CosDel(context.Background(), keys)
+	if err != nil {
+		return
+	}
 }

@@ -14,6 +14,7 @@ type Comment struct {
 	PostId     int         `json:"post_id"     ` //
 	UserId     int         `json:"user_id"     ` //
 	ReplyId    int         `json:"reply_id"    ` // 被评论者
+	CommentId  int         `json:"comment_id"  ` //
 	Floor      int         `json:"floor"       ` // 评论从1开始；0为楼中楼
 	ParentId   int         `json:"parent_id"   ` //
 	Content    string      `json:"content"     ` //
