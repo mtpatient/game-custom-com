@@ -1,6 +1,6 @@
 package api
 
-type FollowVo struct {
+type FollowUserVo struct {
 	Id        int    `json:"id"`
 	Avatar    string `json:"avatar"`
 	Username  string `json:"username"`

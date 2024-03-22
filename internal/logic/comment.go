@@ -13,26 +13,79 @@ import (
 type sComment struct {
 }
 
+func (s sComment) GetCommentById(ctx context.Context, i int) (api.PostCommentRes, error) {
+	var res []api.PostCommentRes
+	db := dao.Comment.Ctx(ctx)
+
+	err := db.Where("id", i).Scan(&res)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return api.PostCommentRes{}, gerror.New("获取评论失败")
+	}
+
+	v := service.Context().Get(ctx).User
+	if v != nil {
+		err = handleComments(ctx, res, v.Id)
+
+	} else {
+		err = handleComments(ctx, res, 0)
+	}
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return api.PostCommentRes{}, gerror.New("获取评论失败")
+	}
+
+	return res[0], nil
+}
+
+func (s sComment) GetMineComments(ctx context.Context, get api.CommentGet) ([]api.CommentRes, error) {
+	var res []api.CommentRes
+
+	db := dao.Comment.Ctx(ctx).Fields("comment.id,comment.post_id,comment.user_id, user.username AS username,"+
+		"url AS avatar, comment.reply_id, reply_user.username AS reply_name, comment.comment_id, replied_comment.content AS reply_content,"+
+		"post.title AS post_title, comment.floor,  comment.parent_id,  comment.content,   comment.like_count,  comment.status,  comment.create_time,").
+		LeftJoin("post", "post.id = comment.post_id").
+		LeftJoin("user", "user.id = comment.user_id").
+		LeftJoin("user AS reply_user", "reply_user.id = comment.reply_id").
+		LeftJoin("image", "user.avatar = image.id").
+		LeftJoin("comment AS replied_comment", "replied_comment.id = comment.comment_id")
+
+	if get.ShowType == 1 {
+		db = db.Where("comment.user_id", get.Id)
+	} else if get.ShowType == 2 {
+		db = db.Where("comment.reply_id", get.Id).WhereNot("comment.user_id", get.Id)
+	} else {
+		return nil, gerror.New("参数错误")
+	}
+
+	if err := db.Order("comment.create_time DESC").Limit((get.PageIndex-1)*get.PageSize, get.PageSize).Scan(&res); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取评论失败")
+	}
+
+	return res, nil
+}
+
 func (s sComment) Del(ctx context.Context, i int) error {
 	uid := service.Context().Get(ctx).User.Id
 	role := service.Context().Get(ctx).User.Role
 	db := dao.Comment.Ctx(ctx).Where("id", i)
-	//messageDb := dao.Message.Ctx(ctx).Where("comment_id", i)
+	messageDb := dao.Message.Ctx(ctx).Where("comment_id", i)
 
 	err := dao.Message.Ctx(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		if role == 1 {
 			// 管理员
-			//id, err := db.Fields("user_id").Value()
-			//if err != nil {
-			//	g.Log().Error(ctx, err)
-			//	return gerror.New("删除评论失败")
-			//}
-			//_, err = messageDb.Delete("user_id", id)
-			//if err != nil {
-			//	g.Log().Error(ctx, err)
-			//	return gerror.New("删除评论失败")
-			//}
-			_, err := db.Delete()
+			id, err := db.Fields("user_id").Value()
+			if err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("删除评论失败")
+			}
+			_, err = messageDb.Delete("user_id", id)
+			if err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("删除评论失败")
+			}
+			_, err = db.Delete()
 			if err != nil {
 				g.Log().Error(ctx, err)
 				return gerror.New("删除评论失败")
@@ -50,11 +103,11 @@ func (s sComment) Del(ctx context.Context, i int) error {
 			if result == nil {
 				return gerror.New("没有权限")
 			}
-			//_, err = messageDb.Where("user_id", uid).Delete()
-			//if err != nil {
-			//	g.Log().Error(ctx, err)
-			//	return gerror.New("删除消息失败")
-			//}
+			_, err = messageDb.Where("user_id", uid).Delete()
+			if err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("删除消息失败")
+			}
 		}
 		return nil
 	})

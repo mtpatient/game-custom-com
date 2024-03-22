@@ -23,6 +23,7 @@ const (
 	PostLikesKey    = "game:like:post:"
 	PostCollectKey  = "game:collect:post:"
 	CommentLikesKey = "game:like:comment:"
+	SearchKey       = "game:search:keywords"
 )
 
 const (

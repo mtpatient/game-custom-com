@@ -12,10 +12,18 @@ import (
 type Comment struct {
 }
 
+// Add @router /comment [post]
+// @Summary 添加评论
+// @Description 添加评论
+// @Tags comment
+// @accept application/json
+// @Param body api.CommentAdd
+// @Success utility.R{code=0,msg=””,data{}}
 func (c *Comment) Add(r *ghttp.Request) {
 	var commentAdd api.CommentAdd
 
 	err := r.Parse(&commentAdd)
+	g.Log().Info(r.Context(), commentAdd)
 	if err != nil {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
 	}
@@ -35,7 +43,7 @@ func (c *Comment) Add(r *ghttp.Request) {
 // @Tags comment
 // @accept application/json
 // @Param body api.PostCommentGet
-// @Success utility.R{code=0,msg=””,data{comments=api.Comments}}
+// @Success utility.R{code=0,msg=””,data{comments=[]api.PostCommentRes}}
 func (c *Comment) GetPostCommentList(r *ghttp.Request) {
 	var postCommentGet api.PostCommentGet
 
@@ -93,4 +101,44 @@ func (c *Comment) Like(r *ghttp.Request) {
 	}
 
 	r.Response.WriteJsonExit(utility.GetR())
+}
+
+// GetMineComments @router /comment/getMine [post]
+// @Summary 获取个人评论列表
+// @Description 获取个人评论列表
+// @Tags comment
+// @accept application/json
+// @Param body api.CommentGet
+// @Success utility.R{code=0,msg=””,data{comments=[]api.CommentRes}}
+func (c *Comment) GetMineComments(r *ghttp.Request) {
+	var get api.CommentGet
+
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	comments, err := service.Comment().GetMineComments(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR().PUT("comments", comments))
+}
+
+// GetCommentById @router /comment/:id [get]
+// @Summary 获取单个评论
+// @Description 获取单个评论
+// @Tags comment
+// @accept application/json
+// @Param id
+// @Success utility.R{code=0,msg=””,data{comments=[]api.PostCommentRes}}
+func (c *Comment) GetCommentById(r *ghttp.Request) {
+	id := r.Get("id")
+
+	comment, err := service.Comment().GetCommentById(r.Context(), id.Int())
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("comment", comment))
 }

@@ -25,7 +25,7 @@ func (c *Follow) IsFollow(r *ghttp.Request) {
 // @Param id int
 // @accept json
 // @produce json
-// @success  0 utility.R{code=0, msg="", data={"follow_list":[]api.FollowVo"}}
+// @success  0 utility.R{code=0, msg="", data={"follow_list":[]api.FollowUserVo"}}
 func (c *Follow) GetFollowList(r *ghttp.Request) {
 	id := r.Get("id")
 

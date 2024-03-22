@@ -87,10 +87,13 @@ func (s sMiddleware) Ctx(r *ghttp.Request) {
 }
 
 func (s sMiddleware) Auth(r *ghttp.Request) {
+	if r.Header["Token"] == nil {
+		r.Response.WriteStatusExit(http.StatusForbidden)
+	}
 	if ok, _ := service.User().IsLogin(r.Context()); ok {
 		r.Middleware.Next()
 	} else {
-		r.Response.WriteStatusExit(http.StatusForbidden)
+		r.Response.WriteStatusExit(http.StatusUnauthorized)
 	}
 }
 

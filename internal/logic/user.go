@@ -26,6 +26,36 @@ type (
 	}
 )
 
+func (s *sUser) SearchUser(ctx context.Context, get api.UserSearchParams) ([]api.FollowUserVo, error) {
+	var res []api.FollowUserVo
+
+	err := dao.User.Ctx(ctx).LeftJoin("image", "image.id=user.avatar").
+		Fields("user.id,username,signature,url as avatar").
+		WhereLike("username", "%"+get.KeyWord+"%").
+		Limit((get.PageIndex-1)*get.PageSize, get.PageSize).Scan(&res)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("查询失败")
+	}
+
+	// 若当前请求已登录，则需要判断当前用户是否已关注
+	if user := service.Context().Get(ctx).User; user != nil {
+		g.Log().Info(ctx, "查询是否关注")
+		array, err := dao.Follow.Ctx(ctx).Where("user_id", user.Id).Fields("follow_user_id").Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("查询失败")
+		}
+		for i := range res {
+			if contains(array, res[i].Id) {
+				res[i].IsFollow = 1
+			}
+		}
+	}
+
+	return res, nil
+}
+
 func (s *sUser) Follow(ctx context.Context, follow api.UserFollow) error {
 	uid := service.Context().Get(ctx).User.Id
 	if uid == follow.Id {

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"game-custom-com/api"
+	"game-custom-com/internal/consts"
 	"game-custom-com/internal/dao"
 	"game-custom-com/internal/model/do"
 	"game-custom-com/internal/service"
@@ -17,6 +18,235 @@ type sPost struct {
 
 func init() {
 	service.RegisterPost(&sPost{})
+}
+
+func (s sPost) SearchPost(ctx context.Context, get api.SearchParams) ([]api.PostVo, error) {
+	var res []api.PostVo
+	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
+		InnerJoin("image", "user.avatar = image.id").
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
+			"top_section,post.status,post.create_time, url as avatar")
+
+	if get.ShowType == 1 {
+		// 热门排序
+		db = db.Order("like_count desc").Order("view_count desc").Order("collect_count desc").Order("create_time desc")
+	} else if get.ShowType == 2 {
+		// 最新排序
+		db = db.Order("create_time desc")
+	} else {
+		return nil, gerror.New("参数错误")
+	}
+
+	if get.Key != "" {
+		db = db.WhereLike("title", "%"+get.Key+"%").WhereOrLike("content", "%"+get.Key+"%")
+		keys := KeywordCut(get.Key)
+		if len(keys) > 1 {
+			for _, key := range keys {
+				db = db.WhereOrLike("title", "%"+key+"%")
+			}
+		}
+
+		uid := 0
+		if user := service.Context().Get(ctx).User; user != nil {
+			uid = user.Id
+		}
+
+		// 协程保存历史搜索
+		go func(keys []string) {
+			err := service.Search().Save(context.Background(), uid, get.Key)
+			if err != nil {
+				g.Log().Error(ctx, err)
+			}
+
+			for _, key := range keys {
+				_, err = g.Redis().HIncrBy(context.Background(), consts.SearchKey, key, 1)
+				if err != nil {
+					g.Log().Error(ctx, err)
+				}
+			}
+		}(keys)
+	}
+
+	err := db.Limit((get.PageIndex-1)*get.PageSize, get.PageSize).Scan(&res)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取数据失败")
+	}
+
+	// 评论数、图片列表、判断是否点赞
+	commentDb := dao.Comment.Ctx(ctx)
+	imgDb := dao.Image.Ctx(ctx)
+	var likes []gdb.Value
+	user := service.Context().Get(ctx).User
+	if user != nil {
+		array, err := dao.Like.Ctx(ctx).Fields("post_id").Where("user_id", user.Id).WhereNull("comment_id").Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取点赞数失败")
+		}
+		likes = array
+	}
+	for i := range res {
+		count, err := commentDb.Where("post_id", res[i].Id).Count()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取评论数失败")
+		}
+		res[i].CommentCount = count
+
+		array, err := imgDb.Fields("url").Where("post_id", res[i].Id).Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取图片列表失败")
+		}
+
+		res[i].ImgList = toString(array)
+
+		if likes != nil {
+			if contains(likes, res[i].Id) {
+				res[i].IsLike = 1
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func (s sPost) GetFollow(ctx context.Context, get api.GetPostParams) ([]api.PostVo, error) {
+	var res []api.PostVo
+	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
+		InnerJoin("image", "user.avatar = image.id").
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
+			"top_section,post.status,post.create_time, url as avatar").Where("MONTH(post.create_time) = MONTH(CURDATE())")
+
+	uid := service.Context().Get(ctx).User.Id
+
+	array, err := dao.Follow.Ctx(ctx).Fields("follow_user_id").Where("user_id", uid).Array()
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取关注列表失败")
+	}
+
+	if err := db.WhereIn("user_id", array).Order("create_time desc").Limit((get.PageIndex-1)*get.PageSize, get.PageSize).
+		Scan(&res); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取帖子列表失败")
+	}
+
+	// 评论数、图片列表、判断是否点赞
+	commentDb := dao.Comment.Ctx(ctx)
+	imgDb := dao.Image.Ctx(ctx)
+	var likes []gdb.Value
+	user := service.Context().Get(ctx).User
+	if user != nil {
+		array, err := dao.Like.Ctx(ctx).Fields("post_id").Where("user_id", user.Id).WhereNull("comment_id").Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取点赞数失败")
+		}
+		likes = array
+	}
+	for i := range res {
+		count, err := commentDb.Where("post_id", res[i].Id).Count()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取评论数失败")
+		}
+		res[i].CommentCount = count
+
+		array, err := imgDb.Fields("url").Where("post_id", res[i].Id).Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取图片列表失败")
+		}
+
+		res[i].ImgList = toString(array)
+
+		if likes != nil {
+			if contains(likes, res[i].Id) {
+				res[i].IsLike = 1
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func (s sPost) GetPostList(ctx context.Context, get api.GetPostParams) ([]api.PostVo, error) {
+	var res []api.PostVo
+	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
+		InnerJoin("image", "user.avatar = image.id").
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
+			"top_section,post.status,post.create_time, url as avatar").Where("MONTH(post.create_time) = MONTH(CURDATE())")
+
+	if get.Id != 0 {
+		db = db.Where("section", get.Id)
+		if get.ShowType == 1 {
+			// 默认排序 点赞、收藏、浏览
+			db = db.Order("like_count desc").Order("collect_count desc").Order("view_count desc")
+		} else if get.ShowType != 2 {
+			// 按最新发布
+			return nil, gerror.New("参数错误!")
+		}
+		db = db.Order("create_time desc")
+	}
+
+	err := db.Limit((get.PageIndex-1)*get.PageSize, get.PageSize).Scan(&res)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取帖子列表失败！")
+	}
+
+	// 评论数、图片列表、判断是否点赞
+	commentDb := dao.Comment.Ctx(ctx)
+	imgDb := dao.Image.Ctx(ctx)
+	var likes []gdb.Value
+	user := service.Context().Get(ctx).User
+	if user != nil {
+		array, err := dao.Like.Ctx(ctx).Fields("post_id").Where("user_id", user.Id).WhereNull("comment_id").Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取点赞数失败")
+		}
+		likes = array
+	}
+	for i := range res {
+		count, err := commentDb.Where("post_id", res[i].Id).Count()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取评论数失败")
+		}
+		res[i].CommentCount = count
+
+		array, err := imgDb.Fields("url").Where("post_id", res[i].Id).Array()
+		if err != nil {
+			g.Log().Error(ctx, err)
+			return nil, gerror.New("获取图片列表失败")
+		}
+
+		res[i].ImgList = toString(array)
+
+		if likes != nil {
+			if contains(likes, res[i].Id) {
+				res[i].IsLike = 1
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func (s sPost) GetTopPost(ctx context.Context, id int) ([]api.TopPostVo, error) {
+	var res []api.TopPostVo
+
+	err := dao.Post.Ctx(ctx).Fields("id, title").Where("section", id).
+		Where("top_section", 1).Scan(&res)
+	if err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取置顶帖子失败！")
+	}
+
+	return res, nil
 }
 
 func (s sPost) Update(ctx context.Context, update api.PostAdd) error {
@@ -117,14 +347,16 @@ func (s sPost) Top(ctx context.Context, top api.TopPost) error {
 			return gerror.New("帖子取消置顶失败！")
 		}
 	case 3:
-		// 查询是否已置顶其他帖子
-		count, err := db.WhereNot("id", top.Id).Where("top_section", 1).Count()
+		// 查询是否已置顶其他帖子，板块帖子置顶不能超过3个
+		count, err := db.LeftJoin("post p2", "post.section = p2.section").
+			Where("post.id", top.Id).WhereNot("p2.id", top.Id).Where("p2.top_section", 1).
+			Count("p2.section")
 		if err != nil {
 			g.Log().Error(ctx, err)
 			return gerror.New("帖子置顶失败！")
 		}
-		if count > 0 {
-			return gerror.New("帖子置顶失败！请先取消其他帖子置顶！")
+		if count >= 3 {
+			return gerror.New("帖子置顶失败！每个板块最多置顶三个帖子，请先取消其他帖子置顶！")
 		}
 
 		if user.Role == 1 {
@@ -523,7 +755,7 @@ func (s sPost) Collect(ctx context.Context, collect api.PostCollect) error {
 	return nil
 }
 
-func (s sPost) GetMinePost(ctx context.Context, get api.GetMinePost) ([]api.PostVo, error) {
+func (s sPost) GetMinePost(ctx context.Context, get api.GetPostParams) ([]api.PostVo, error) {
 	var res []api.PostVo
 	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
 		InnerJoin("image", "user.avatar = image.id").

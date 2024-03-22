@@ -41,3 +41,19 @@ type CommentLike struct {
 	ToUserId int `json:"to_user_id" v:"required"`
 	PostId   int `json:"post_id" v:"required"`
 }
+
+type CommentGet struct {
+	Id        int `json:"id" v:"required"`
+	PageIndex int `json:"page_index" v:"required"`
+	PageSize  int `json:"page_size" v:"required"`
+	ShowType  int `json:"show_type" v:"required"` // 1:我的评论， 2：回复我的
+}
+
+type CommentRes struct {
+	entity.Comment
+	UserName     string `json:"username"`
+	ReplyName    string `json:"reply_name"`
+	Avatar       string `json:"avatar"`
+	ReplyContent string `json:"reply_content"`
+	PostTitle    string `json:"post_title"`
+}

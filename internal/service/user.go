@@ -19,6 +19,7 @@ type IUser interface {
 	GetAuthCode(ctx context.Context, str string) error
 	ResetPwd(ctx context.Context, rs api.ResetPwd) error
 	Follow(ctx context.Context, follow api.UserFollow) error
+	SearchUser(ctx context.Context, get api.UserSearchParams) ([]api.FollowUserVo, error)
 }
 
 var localUser IUser

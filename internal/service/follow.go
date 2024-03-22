@@ -7,7 +7,7 @@ import (
 
 type IFollow interface {
 	IsFollow(ctx context.Context, id int) bool
-	GetFollowList(ctx context.Context, i int) ([]api.FollowVo, error)
+	GetFollowList(ctx context.Context, i int) ([]api.FollowUserVo, error)
 	GetFansList(ctx context.Context, get api.FansGet) ([]api.FansVo, error)
 }
 

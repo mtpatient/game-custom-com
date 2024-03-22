@@ -18,6 +18,7 @@ func (c *Post) CPost() *Post {
 // Add @router /post [put]
 // @Summary 添加帖子
 // @Description 添加帖子
+// @Tags post
 // @Param Object api.PostAdd
 // @accept application/json
 // @Produce application/json
@@ -88,12 +89,13 @@ func (c *Post) Collect(r *ghttp.Request) {
 // GetMinePost @router /post/mine [post]
 // @Summary 获取我的帖子
 // @Description 获取我的帖子
-// @Param Object body get api.GetMinePost
+// @Tags post
+// @Param Object body get api.GetPostParams
 // @accept application/json
 // @Produce application/json
 // @Success utility.R{code=0,msg="",data={posts:[]api.PostVo}}
 func (c *Post) GetMinePost(r *ghttp.Request) {
-	var get api.GetMinePost
+	var get api.GetPostParams
 
 	err := r.Parse(&get)
 	if err != nil {
@@ -111,6 +113,7 @@ func (c *Post) GetMinePost(r *ghttp.Request) {
 // Top @router /post/top [post]
 // @Summary 置顶帖子或取消置顶
 // @Description 置顶帖子或取消置顶
+// @Tags post
 // @Param Object body get api.TopPost
 // @accept application/json
 // @Produce application/json
@@ -135,6 +138,7 @@ func (c *Post) Top(r *ghttp.Request) {
 // Del @router /post/:id [delete]
 // @Summary 删除帖子
 // @Description 删除帖子
+// @Tags post
 // @Param id
 // @accept application/json
 // @Produce application/json
@@ -153,6 +157,7 @@ func (c *Post) Del(r *ghttp.Request) {
 // Update @router /post [put]
 // @Summary 修改帖子
 // @Description 修改帖子
+// @Tags post
 // @Param Object api.PostAdd
 // @accept application/json
 // @Produce application/json
@@ -172,4 +177,90 @@ func (c *Post) Update(r *ghttp.Request) {
 	}
 
 	r.Response.WriteJsonExit(utility.GetR())
+}
+
+// GetTopPost @router /post/top/:id [get]
+// @Summary 获取板块置顶的帖子
+// @Description 获取板块置顶的帖子
+// @Tags post
+// @Param int id
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={[]api.TopPostVo}}
+func (c *Post) GetTopPost(r *ghttp.Request) {
+	id := r.Get("id").Int()
+
+	posts, err := service.Post().GetTopPost(r.Context(), id)
+
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts))
+
+}
+
+// GetFollow @router /post/follow [get]
+// @Summary 获取关注的人帖子
+// @Description 获取关注的人帖子
+// @Tags post
+// @Param
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={posts:[]api.PostVo}}
+func (c *Post) GetFollow(r *ghttp.Request) {
+	var get api.GetPostParams
+	err := r.Parse(&get)
+
+	posts, err := service.Post().GetFollow(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts))
+}
+
+// GetPostList @router /post/list [post]
+// @Summary 获取各个板块的帖子
+// @Description 获取各个板块的帖子
+// @Tags post
+// @Param Object body get api.GetPostParams
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={posts:[]api.PostVo}}
+func (c *Post) GetPostList(r *ghttp.Request) {
+	var get api.GetPostParams
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	posts, err := service.Post().GetPostList(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts))
+}
+
+// SearchPost @router /post/search [post]
+// @Summary 搜索帖子
+// @Description 搜索帖子
+// @Tags post
+// @Param Object body get api.SearchParams
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={posts:[]api.PostVo}}
+func (c *Post) SearchPost(r *ghttp.Request) {
+	var get api.SearchParams
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	posts, err := service.Post().SearchPost(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts))
 }

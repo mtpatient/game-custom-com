@@ -9,6 +9,7 @@ import (
 	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
 	"game-custom-com/utility"
+	"github.com/go-ego/gse"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/text/gstr"
@@ -180,7 +181,7 @@ func TestWithSelect(t *testing.T) {
 
 func TestImgMap(t *testing.T) {
 	ctx := context.Background()
-	var users []api.FollowVo
+	var users []api.FollowUserVo
 	array, err := dao.Follow.Ctx(ctx).Where("user_id", 14).Fields("follow_user_id").Array()
 	if err != nil {
 		g.Log().Error(ctx, err)
@@ -252,4 +253,50 @@ func TestCosDel(t *testing.T) {
 	if err != nil {
 		return
 	}
+}
+
+func TestSeGo(t *testing.T) {
+	str := "比安,hhhhhalskdj,卡,空中花园，白毛索拉卡觉得，继续加长，看看效果怎么样，这不是哈可以吗？为什么之前就卡死了"
+
+	var seg gse.Segmenter
+
+	err := seg.LoadDict()
+	if err != nil {
+		return
+	}
+	//segments := seg.Cut(str, true)
+	res := seg.Cut(str, true)
+	//fmt.Println(segments)
+	fmt.Println(res)
+
+	//seg.AddToken("比安卡", 100, "nrt")
+	//seg.AddToken("花嫁", 100, "n")
+	//seg.AddToken("七实", 100, "n")
+	//segments := seg.ModeSegment([]byte(str), true)
+	//fmt.Println(seg)
+	//strs := make([]string, 0)
+	//filer := []string{"n", "nr", "v", "vn", "nrt"}
+	//for _, segment := range segments {
+	//	word := segment.Token().Text()
+	//	pos := segment.Token().Pos()
+	//	for _, f := range filer {
+	//		if pos == f {
+	//			strs = append(strs, word)
+	//		}
+	//	}
+	//	fmt.Println(word, pos)
+	//}
+
+	//fmt.Println(strs)
+}
+
+func TestWith(t *testing.T) {
+	ctx := context.Background()
+	var res []api.LikesMessageVo
+	dao.Like.Ctx(ctx).Fields("like.id,`user_id`,`like`.`post_id`,`comment_id`,`praise_id`,`like`.create_time, username, url as avatar").
+		LeftJoin("user", "user.id = like.user_id").
+		LeftJoin("image", "image.id = user.avatar").
+		With(entity.Comment{}, entity.Post{}).Where("like.id", 1).Scan(&res)
+
+	g.Log().Info(ctx, res)
 }

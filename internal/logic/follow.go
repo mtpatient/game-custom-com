@@ -27,8 +27,8 @@ func (s sFollow) IsFollow(ctx context.Context, id int) bool {
 	return false
 }
 
-func (s sFollow) GetFollowList(ctx context.Context, i int) ([]api.FollowVo, error) {
-	var res []api.FollowVo
+func (s sFollow) GetFollowList(ctx context.Context, i int) ([]api.FollowUserVo, error) {
+	var res []api.FollowUserVo
 	user := service.Context().Get(ctx).User
 
 	array, err := dao.Follow.Ctx(ctx).Where("user_id", i).Fields("follow_user_id").Array()

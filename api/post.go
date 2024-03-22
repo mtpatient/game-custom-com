@@ -28,11 +28,11 @@ type PostCollect struct {
 	Status  int `json:"status"`
 }
 
-type GetMinePost struct {
-	Id        int `json:"id" v:"required"`
+type GetPostParams struct {
+	Id        int `json:"id"`
 	PageIndex int `json:"page_index" v:"required"`
 	PageSize  int `json:"page_size" v:"required"`
-	ShowType  int `json:"show_type" v:"required"`
+	ShowType  int `json:"show_type"`
 }
 
 type PostVo struct {
@@ -47,4 +47,16 @@ type PostVo struct {
 type TopPost struct {
 	Id      int `json:"id" v:"required"`
 	Operate int `json:"operate" ` // 1，个人置顶 2，个人取消置顶 3，官方板块置顶 4，官方板块取消置顶
+}
+
+type TopPostVo struct {
+	Id    int    `json:"id"`
+	Title string `json:"title"`
+}
+
+type SearchParams struct {
+	Key       string `json:"key" v:"required"`
+	PageIndex int    `json:"page_index" v:"required"`
+	PageSize  int    `json:"page_size" v:"required"`
+	ShowType  int    `json:"show_type" v:"required"`
 }

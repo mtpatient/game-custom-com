@@ -195,3 +195,18 @@ func (c *User) Follow(r *ghttp.Request) {
 	}
 	r.Response.WriteJsonExit(utility.GetR())
 }
+
+func (c *User) SearchUser(r *ghttp.Request) {
+	var get api.UserSearchParams
+
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	users, err := service.User().SearchUser(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR().PUT("users", users))
+}

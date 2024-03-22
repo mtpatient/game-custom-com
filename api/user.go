@@ -44,3 +44,9 @@ type UserFollow struct {
 	Id      int `json:"id"`
 	Operate int `json:"operate"` // 2：取消关注，1：关注
 }
+
+type UserSearchParams struct {
+	KeyWord   string `json:"keyword" v:"required"`
+	PageIndex int    `json:"page_index" v:"required"`
+	PageSize  int    `json:"page_size" v:"required"`
+}

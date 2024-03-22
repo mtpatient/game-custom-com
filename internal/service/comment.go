@@ -10,6 +10,8 @@ type IComment interface {
 	GetPostCommentList(ctx context.Context, get api.PostCommentGet) ([]api.PostCommentRes, error)
 	Del(ctx context.Context, i int) error
 	Like(ctx context.Context, like api.CommentLike) error
+	GetMineComments(ctx context.Context, get api.CommentGet) ([]api.CommentRes, error)
+	GetCommentById(ctx context.Context, i int) (api.PostCommentRes, error)
 }
 
 var localComment IComment

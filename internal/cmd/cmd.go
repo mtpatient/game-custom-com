@@ -33,6 +33,7 @@ var (
 			cFeedback := new(controller.Feedback)
 			cFollow := new(controller.Follow)
 			cComment := new(controller.Comment)
+			cMessage := new(controller.Message)
 			// 不鉴权
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.POST("/register", cUser.Register)
@@ -43,10 +44,14 @@ var (
 					group.GET("/:id", cUser.GetUser)
 					group.GET("/authCode/:username", cUser.GetAuthCode)
 					group.POST("/resetPwd", cUser.ResetPwd)
+					group.POST("/search", cUser.SearchUser)
 				})
 				group.Group("/post", func(group *ghttp.RouterGroup) {
 					group.GET("/:id", cPost.GetPostById)
 					group.POST("/getMine", cPost.GetMinePost)
+					group.GET("/top/:id", cPost.GetTopPost)
+					group.POST("/list", cPost.GetPostList)
+					group.POST("/search", cPost.SearchPost)
 				})
 				group.Group("/section", func(group *ghttp.RouterGroup) {
 					group.GET("/all", cSection.GetAll)
@@ -54,6 +59,8 @@ var (
 				})
 				group.Group("/comment", func(group *ghttp.RouterGroup) {
 					group.POST("/getPostCommentList", cComment.GetPostCommentList)
+					group.POST("/getMineComments", cComment.GetMineComments)
+					group.GET("/:id", cComment.GetCommentById)
 				})
 				group.Group("/follow", func(group *ghttp.RouterGroup) {
 					group.GET("/list/:id", cFollow.GetFollowList)
@@ -82,6 +89,7 @@ var (
 					group.DELETE("/:id", cPost.Del)
 					group.POST("/top", cPost.Top)
 					group.PUT("/", cPost.Update)
+					group.POST("/follow", cPost.GetFollow)
 				})
 				group.Group("/feedback", func(group *ghttp.RouterGroup) {
 					group.POST("/", cFeedback.Add)
@@ -93,6 +101,11 @@ var (
 					group.POST("/", cComment.Add)
 					group.DELETE("/:id", cComment.Del)
 					group.POST("/like", cComment.Like)
+				})
+				group.Group("/message", func(group *ghttp.RouterGroup) {
+					group.POST("/likes", cMessage.GetLikesMessage)
+					group.GET("/news", cMessage.GetMessageNew)
+					group.GET("/read/:id", cMessage.Read)
 				})
 			})
 			// 鉴权: 管理员
