@@ -10,6 +10,7 @@ const (
 	RequestErrCode = 450 // 请求解析错误
 	ServiceErrCode = 550 // 业务层错误
 	RedisErrCode   = 600
+	BandErrCode    = 650
 )
 
 /*
@@ -24,9 +25,5 @@ const (
 	PostCollectKey  = "game:collect:post:"
 	CommentLikesKey = "game:like:comment:"
 	SearchKey       = "game:search:keywords"
-)
-
-const (
-	LogSuccess = "success"
-	LogError   = "error"
+	TokenMapKey     = "game:tokenMap:"
 )

@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"encoding/json"
-	"game-custom-com/internal/consts"
 	"game-custom-com/internal/dao"
 	"game-custom-com/internal/model/do"
 	"game-custom-com/internal/model/entity"
@@ -49,10 +48,9 @@ func (s sSection) Add(ctx context.Context, section entity.Section) error {
 	_, err := sdb.Insert(section)
 	jsonData, _ := json.Marshal(section)
 	if err != nil {
-		service.AdmLog().Save(ctx, consts.LogError, "添加板块失败:"+string(jsonData)+err.Error())
 		return gerror.New("添加板块失败")
 	}
-	service.AdmLog().Save(ctx, consts.LogSuccess, "添加板块成功:"+string(jsonData))
+	service.AdmLog().Save(ctx, "板块", "添加板块成功:"+string(jsonData))
 	return nil
 }
 
@@ -67,9 +65,8 @@ func (s sSection) Update(ctx context.Context, section entity.Section) error {
 	})
 	jsonData, _ := json.Marshal(section)
 	if err != nil {
-		service.AdmLog().Save(ctx, consts.LogError, "更新板块失败："+string(jsonData)+err.Error())
 		return gerror.New("更新板块失败")
 	}
-	service.AdmLog().Save(ctx, consts.LogSuccess, "更新板块成功："+string(jsonData))
+	service.AdmLog().Save(ctx, "板块", "更新板块成功："+string(jsonData))
 	return nil
 }

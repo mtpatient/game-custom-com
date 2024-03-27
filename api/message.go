@@ -5,7 +5,7 @@ import (
 	"github.com/gogf/gf/v2/util/gmeta"
 )
 
-type GetLikesParams struct {
+type Params struct {
 	PageIndex int `json:"page_index" v:"required"`
 	PageSize  int `json:"page_size" v:"required"`
 }

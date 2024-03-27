@@ -18,6 +18,8 @@ type IPost interface {
 	GetFollow(ctx context.Context, get api.GetPostParams) ([]api.PostVo, error)
 	GetPostList(ctx context.Context, get api.GetPostParams) ([]api.PostVo, error)
 	SearchPost(ctx context.Context, get api.SearchParams) ([]api.PostVo, error)
+	PostList(ctx context.Context, get api.CommonParams) ([]api.PostBmVo, int, error)
+	UpdateStatus(ctx context.Context, update api.UpdateStatus) error
 }
 
 var localPost IPost

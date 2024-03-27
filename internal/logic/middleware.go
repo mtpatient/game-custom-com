@@ -67,9 +67,7 @@ func (s sMiddleware) Ctx(r *ghttp.Request) {
 		customCtx.User = &entity.User{
 			Id:          user.Id,
 			Username:    user.Username,
-			Password:    user.Password,
 			Email:       user.Email,
-			Avatar:      user.Avatar,
 			Signature:   user.Signature,
 			Sex:         user.Sex,
 			Role:        user.Role,
@@ -91,7 +89,11 @@ func (s sMiddleware) Auth(r *ghttp.Request) {
 		r.Response.WriteStatusExit(http.StatusForbidden)
 	}
 	if ok, _ := service.User().IsLogin(r.Context()); ok {
-		r.Middleware.Next()
+		if user := service.Context().Get(r.Context()).User; user.Status == 0 {
+			r.Middleware.Next()
+		} else {
+			r.Response.WriteJsonExit(utility.GetR().Error(consts.BandErrCode, "用户已被封禁，请联系管理员!"))
+		}
 	} else {
 		r.Response.WriteStatusExit(http.StatusUnauthorized)
 	}

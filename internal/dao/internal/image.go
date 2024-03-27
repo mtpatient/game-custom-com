@@ -22,7 +22,7 @@ type ImageDao struct {
 type ImageColumns struct {
 	Id         string //
 	Url        string // 图片地址
-	Type       string // 0：用户头像；1：帖子图片; 2：意见反馈
+	Type       string // 0：用户头像；1：帖子图片; 2：意见反馈；3：轮播图
 	Name       string //
 	PostId     string // 帖子图片
 	FeedbackId string // 反馈图片

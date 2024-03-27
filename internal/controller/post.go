@@ -15,7 +15,7 @@ func (c *Post) CPost() *Post {
 	return &Post{}
 }
 
-// Add @router /post [put]
+// Add @router /post [post]
 // @Summary 添加帖子
 // @Description 添加帖子
 // @Tags post
@@ -40,6 +40,14 @@ func (c *Post) Add(r *ghttp.Request) {
 	res.WriteJsonExit(utility.GetR().PUT("id", id))
 }
 
+// GetPostById @router /post [put]
+// @Summary 根据id获取帖子
+// @Description 根据id获取帖子
+// @Tags post
+// @Param id
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={api.PostDetail}}
 func (c *Post) GetPostById(r *ghttp.Request) {
 	id := r.Get("id").Int()
 
@@ -263,4 +271,48 @@ func (c *Post) SearchPost(r *ghttp.Request) {
 	}
 
 	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts))
+}
+
+// PostList @router /post/bm/list [post]
+// @Summary 获取各个板块的帖子
+// @Description 获取各个板块的帖子
+// @Tags post
+// @Param Object body get api.CommonParams
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={posts=[]entity.Post}}
+func (c *Post) PostList(r *ghttp.Request) {
+	var get api.CommonParams
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+
+	posts, total, err := service.Post().PostList(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("posts", posts).PUT("total", total))
+}
+
+// UpdateStatus @router /post/bm/status [put]
+// @Summary 获取各个板块的帖子
+// @Description 获取各个板块的帖子
+// @Tags post
+// @Param Object body get api.UpdateStatus
+// @accept application/json
+// @Produce application/json
+// @Success utility.R{code=0,msg="",data={}}
+func (c *Post) UpdateStatus(r *ghttp.Request) {
+	var update api.UpdateStatus
+	err := r.Parse(&update)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	err = service.Post().UpdateStatus(r.Context(), update)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR())
 }

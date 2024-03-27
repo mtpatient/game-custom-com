@@ -17,4 +17,4 @@ temp/
 temp.yaml
 bin
 **/config/config.yaml
-
+project_test.go

@@ -8,9 +8,43 @@ import (
 	"game-custom-com/internal/service"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
 type sMessage struct {
+}
+
+func (s sMessage) GetNotice(ctx context.Context, params api.Params) ([]entity.Message, error) {
+	var res []entity.Message
+
+	uid := service.Context().Get(ctx).User.Id
+
+	if err := dao.Message.Ctx(ctx).Where("receive_id", uid).Where("type", 0).Order("id desc").
+		Limit((params.PageIndex-1)*params.PageSize, params.PageSize).
+		Scan(&res); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, gerror.New("获取通知失败！")
+	}
+
+	return res, nil
+}
+
+func (s sMessage) Add(ctx context.Context, message entity.Message) error {
+	if _, err := dao.Message.Ctx(ctx).Insert(message); err != nil {
+		g.Log().Error(ctx, err)
+		return gerror.New("添加消息失败！")
+	}
+	return nil
+}
+
+func (s sMessage) Publish(ctx context.Context, id int, message string) error {
+	//g.Log().Info(ctx, "发布消息", id, message)
+	_, err := g.Redis().Publish(ctx, gconv.String(id), message)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s sMessage) Read(ctx context.Context, id int) error {
@@ -23,6 +57,10 @@ func (s sMessage) Read(ctx context.Context, id int) error {
 	if err != nil {
 		g.Log().Error(ctx, err)
 		return gerror.New("标记消息为已读失败！")
+	}
+
+	if err := s.Publish(ctx, uid, "已读"); err != nil {
+		return err
 	}
 
 	return nil
@@ -45,7 +83,7 @@ func (s sMessage) GetMessageNew(ctx context.Context) ([]int, error) {
 	return res, nil
 }
 
-func (s sMessage) GetLikesMessage(ctx context.Context, get api.GetLikesParams) ([]api.LikesMessageVo, error) {
+func (s sMessage) GetLikesMessage(ctx context.Context, get api.Params) ([]api.LikesMessageVo, error) {
 	var res []api.LikesMessageVo
 
 	uid := service.Context().Get(ctx).User.Id

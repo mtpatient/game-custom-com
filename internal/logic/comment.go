@@ -4,6 +4,7 @@ import (
 	"context"
 	"game-custom-com/api"
 	"game-custom-com/internal/dao"
+	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gerror"
@@ -11,6 +12,36 @@ import (
 )
 
 type sComment struct {
+}
+
+func (s sComment) CommentList(ctx context.Context, get api.CommonParams) ([]api.CommentRes, int, error) {
+	var res []api.CommentRes
+	var total int
+	db := dao.Comment.Ctx(ctx).Fields("comment.id,comment.post_id,comment.user_id, user.username AS username,"+
+		"comment.reply_id, reply_user.username AS reply_name, comment.comment_id,"+
+		"post.title AS post_title, comment.floor,  comment.parent_id,  comment.content,   comment.like_count,  comment.status,  comment.create_time,").
+		LeftJoin("post", "post.id = comment.post_id").
+		LeftJoin("user", "user.id = comment.user_id").
+		LeftJoin("user AS reply_user", "reply_user.id = comment.reply_id").
+		LeftJoin("comment AS replied_comment", "replied_comment.id = comment.comment_id")
+
+	if get.Keyword != "" {
+		db = db.WhereLike("title", "%"+get.Keyword+"%").WhereOrLike("comment.content", "%"+get.Keyword+"%")
+	}
+	if get.ShowType == 1 {
+		db = db.Order("id asc")
+	} else if get.ShowType == 2 {
+		db = db.Order("id desc")
+	} else {
+		return nil, total, gerror.New("参数错误")
+	}
+
+	if err := db.Limit((get.PageIndex-1)*get.PageSize, get.PageSize).ScanAndCount(&res, &total, false); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, 0, gerror.New("查询失败")
+	}
+
+	return res, total, nil
 }
 
 func (s sComment) GetCommentById(ctx context.Context, i int) (api.PostCommentRes, error) {
@@ -75,20 +106,37 @@ func (s sComment) Del(ctx context.Context, i int) error {
 	err := dao.Message.Ctx(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		if role == 1 {
 			// 管理员
-			id, err := db.Fields("user_id").Value()
+			var comment entity.Comment
+			err := db.Scan(&comment)
 			if err != nil {
 				g.Log().Error(ctx, err)
 				return gerror.New("删除评论失败")
 			}
-			_, err = messageDb.Delete("user_id", id)
+			_, err = messageDb.Delete("user_id", comment.UserId)
 			if err != nil {
 				g.Log().Error(ctx, err)
 				return gerror.New("删除评论失败")
 			}
+
 			_, err = db.Delete()
 			if err != nil {
 				g.Log().Error(ctx, err)
 				return gerror.New("删除评论失败")
+			}
+			// 保存管理员操作日志
+			service.AdmLog().Save(ctx, "删除评论", "删除评论："+comment.Content)
+
+			// 发送通知
+			if err := service.Message().Add(ctx, entity.Message{
+				UserId:    uid,
+				ReceiveId: comment.UserId,
+				Content:   comment.Content,
+				Type:      0,
+				PostId:    comment.CommentId,
+				IsRead:    0,
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return err
 			}
 		} else {
 			// 普通用户
@@ -198,6 +246,11 @@ func (s sComment) Add(ctx context.Context, add api.CommentAdd) error {
 		}); err != nil {
 			return err
 		}
+
+		if err := service.Message().Publish(ctx, add.ToUserId, "评论"); err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -259,6 +312,10 @@ func (s sComment) Like(ctx context.Context, like api.CommentLike) error {
 			}); err != nil {
 				return err
 			}
+
+			if err := service.Message().Publish(ctx, like.ToUserId, "点赞"); err != nil {
+				return err
+			}
 		} else if like.Operate == 2 {
 			count, err := dao.Like.Ctx(ctx).Where(g.Map{
 				"comment_id": like.Id,
@@ -300,6 +357,9 @@ func (s sComment) Like(ctx context.Context, like api.CommentLike) error {
 				"comment_id": like.Id,
 				"post_id":    like.PostId,
 			}); err != nil {
+				return err
+			}
+			if err := service.Message().Publish(ctx, like.ToUserId, "取消点赞"); err != nil {
 				return err
 			}
 		}

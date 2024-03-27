@@ -142,3 +142,22 @@ func (c *Comment) GetCommentById(r *ghttp.Request) {
 
 	r.Response.WriteJsonExit(utility.GetR().PUT("comment", comment))
 }
+
+// CommentList @router /comment/list [post]
+// @Summary 获取评论列表
+// @Description 获取评论列表
+// @Tags comment
+// @accept application/json
+// @Param Object api.CommonParams
+// @Success utility.R{code=0,msg=””,data{comments=[]api.CommentRes}}
+func (c *Comment) CommentList(r *ghttp.Request) {
+	var params api.CommonParams
+	if err := r.Parse(&params); err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	comments, total, err := service.Comment().CommentList(r.Context(), params)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR().PUT("comments", comments).PUT("total", total))
+}

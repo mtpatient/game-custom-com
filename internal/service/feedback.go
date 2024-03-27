@@ -6,7 +6,8 @@ import (
 )
 
 type IFeedback interface {
-	Create(ctx context.Context, add api.FeedbackAdd) error
+	Create(ctx context.Context, add api.FeedbackVo) error
+	GetList(ctx context.Context, params api.CommonParams) ([]api.FeedbackVo, int, error)
 }
 
 var localFeedback IFeedback

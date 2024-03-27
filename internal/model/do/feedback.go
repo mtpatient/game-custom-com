@@ -14,7 +14,7 @@ type Feedback struct {
 	g.Meta     `orm:"table:feedback, do:true"`
 	Id         interface{} //
 	UserId     interface{} //
-	Comment    interface{} //
+	Content    interface{} //
 	CreateTime *gtime.Time //
 	DeleteTime *gtime.Time //
 }

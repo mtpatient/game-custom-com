@@ -14,7 +14,7 @@ type Image struct {
 	g.Meta     `orm:"table:image, do:true"`
 	Id         interface{} //
 	Url        interface{} // 图片地址
-	Type       interface{} // 0：用户头像；1：帖子图片; 2：意见反馈
+	Type       interface{} // 0：用户头像；1：帖子图片; 2：意见反馈；3：轮播图
 	Name       interface{} //
 	PostId     interface{} // 帖子图片
 	FeedbackId interface{} // 反馈图片

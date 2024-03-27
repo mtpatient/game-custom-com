@@ -12,7 +12,7 @@ import (
 type Image struct {
 	Id         int         `json:"id"          ` //
 	Url        string      `json:"url"         ` // 图片地址
-	Type       int         `json:"type"        ` // 0：用户头像；1：帖子图片; 2：意见反馈
+	Type       int         `json:"type"        ` // 0：用户头像；1：帖子图片; 2：意见反馈；3：轮播图
 	Name       string      `json:"name"        ` //
 	PostId     int         `json:"post_id"     ` // 帖子图片
 	FeedbackId int         `json:"feedback_id" ` // 反馈图片

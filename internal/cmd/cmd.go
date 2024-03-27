@@ -34,6 +34,7 @@ var (
 			cFollow := new(controller.Follow)
 			cComment := new(controller.Comment)
 			cMessage := new(controller.Message)
+			cAdmLog := new(controller.AdmLog)
 			// 不鉴权
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.POST("/register", cUser.Register)
@@ -65,6 +66,12 @@ var (
 				group.Group("/follow", func(group *ghttp.RouterGroup) {
 					group.GET("/list/:id", cFollow.GetFollowList)
 					group.POST("/fans", cFollow.FansList)
+				})
+				group.Group("/message", func(group *ghttp.RouterGroup) {
+					//group.GET("/subscription", cMessage.Subscription)
+				})
+				group.Group("/img", func(group *ghttp.RouterGroup) {
+					group.GET("/slideshow", cImg.GetSlideshow)
 				})
 			})
 			// 鉴权: 普通用户
@@ -106,6 +113,8 @@ var (
 					group.POST("/likes", cMessage.GetLikesMessage)
 					group.GET("/news", cMessage.GetMessageNew)
 					group.GET("/read/:id", cMessage.Read)
+					group.GET("/subscription", cMessage.Subscription)
+					group.POST("/notice", cMessage.GetNotice)
 				})
 			})
 			// 鉴权: 管理员
@@ -121,6 +130,27 @@ var (
 					group.POST("/", cImg.Save)
 					group.DELETE("/avatar/:id", cImg.DeleteAvatar)
 					group.PUT("/", cImg.Update)
+					group.POST("/postImages", cImg.PostImgList)
+					group.DELETE("/:id", cImg.Del)
+					group.POST("/slideshow", cImg.SaveSlideshow)
+					group.PUT("/slideshow", cImg.UpdateSlideshow)
+				})
+				group.Group("/user", func(group *ghttp.RouterGroup) {
+					group.POST("/list", cUser.GetUserList)
+					group.POST("/ban", cUser.Ban)
+				})
+				group.Group("/post", func(group *ghttp.RouterGroup) {
+					group.POST("/bm/list", cPost.PostList)
+					group.PUT("/bm/status", cPost.UpdateStatus)
+				})
+				group.Group("/comment", func(group *ghttp.RouterGroup) {
+					group.POST("/list", cComment.CommentList)
+				})
+				group.Group("/feedback", func(group *ghttp.RouterGroup) {
+					group.POST("/list", cFeedback.List)
+				})
+				group.Group("/adm-log", func(group *ghttp.RouterGroup) {
+					group.POST("/list", cAdmLog.List)
 				})
 			})
 			s.Run()

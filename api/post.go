@@ -60,3 +60,14 @@ type SearchParams struct {
 	PageSize  int    `json:"page_size" v:"required"`
 	ShowType  int    `json:"show_type" v:"required"`
 }
+
+type PostBmVo struct {
+	entity.Post
+	Username string `json:"username"`
+	Section  string `json:"section"`
+}
+
+type UpdateStatus struct {
+	Id     int `json:"id" v:"required"`
+	Status int `json:"status" v:"required"`
+}

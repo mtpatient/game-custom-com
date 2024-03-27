@@ -15,6 +15,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestGetSign(t *testing.T) {
@@ -299,4 +300,34 @@ func TestWith(t *testing.T) {
 		With(entity.Comment{}, entity.Post{}).Where("like.id", 1).Scan(&res)
 
 	g.Log().Info(ctx, res)
+}
+
+func TestPub(t *testing.T) {
+	ctx := context.Background()
+
+	for i := 0; i < 100; i++ {
+		publish, err := g.Redis().Publish(ctx, "test", "test"+string(rune(i)))
+		if err != nil {
+			return
+		}
+		fmt.Println(publish)
+		time.Sleep(time.Second)
+	}
+}
+
+func TestSub(t *testing.T) {
+	ctx := context.Background()
+
+	subscribe, _, err := g.Redis().Subscribe(ctx, "test")
+	if err != nil {
+		return
+	}
+	for {
+		msg, err := subscribe.ReceiveMessage(ctx)
+		if err != nil {
+			g.Log().Error(ctx, err)
+		}
+		g.Log().Info(ctx, msg)
+	}
+
 }

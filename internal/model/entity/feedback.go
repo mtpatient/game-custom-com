@@ -12,7 +12,7 @@ import (
 type Feedback struct {
 	Id         int         `json:"id"          ` //
 	UserId     int         `json:"user_id"     ` //
-	Comment    string      `json:"comment"     ` //
+	Content    string      `json:"content"     ` //
 	CreateTime *gtime.Time `json:"create_time" ` //
 	DeleteTime *gtime.Time `json:"delete_time" ` //
 }

@@ -8,10 +8,10 @@ import (
 
 type IUser interface {
 	Register(ctx context.Context, user api.User) error
-	Login(ctx context.Context, user api.User) (entity.User, string, error)
+	Login(ctx context.Context, user api.User) (api.UserRes, string, error)
 	Logout(ctx context.Context, token string) error
 	NameExist(ctx context.Context, username string) (bool, error)
-	GetById(ctx context.Context, id int) (entity.User, error)
+	GetById(ctx context.Context, id int) (api.UserRes, error)
 	IsLogin(ctx context.Context) (bool, error)
 	UserRole(ctx context.Context) (int, error)
 	Update(ctx context.Context, user entity.User) error
@@ -20,6 +20,8 @@ type IUser interface {
 	ResetPwd(ctx context.Context, rs api.ResetPwd) error
 	Follow(ctx context.Context, follow api.UserFollow) error
 	SearchUser(ctx context.Context, get api.UserSearchParams) ([]api.FollowUserVo, error)
+	GetUserList(ctx context.Context, get api.CommonParams) ([]entity.User, int, error)
+	Ban(ctx context.Context, ban api.Ban) error
 }
 
 var localUser IUser

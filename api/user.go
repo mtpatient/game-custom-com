@@ -50,3 +50,15 @@ type UserSearchParams struct {
 	PageIndex int    `json:"page_index" v:"required"`
 	PageSize  int    `json:"page_size" v:"required"`
 }
+
+type CommonParams struct {
+	Keyword   string `json:"keyword" d:""`
+	PageIndex int    `json:"page_index" v:"required"`
+	PageSize  int    `json:"page_size" v:"required"`
+	ShowType  int    `json:"show_type" d:"1"`
+}
+
+type Ban struct {
+	Id      int `json:"id" v:"required"`
+	Operate int `json:"operate" v:"required"`
+}

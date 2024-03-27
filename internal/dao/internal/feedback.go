@@ -22,7 +22,7 @@ type FeedbackDao struct {
 type FeedbackColumns struct {
 	Id         string //
 	UserId     string //
-	Comment    string //
+	Content    string //
 	CreateTime string //
 	DeleteTime string //
 }
@@ -31,7 +31,7 @@ type FeedbackColumns struct {
 var feedbackColumns = FeedbackColumns{
 	Id:         "id",
 	UserId:     "user_id",
-	Comment:    "comment",
+	Content:    "content",
 	CreateTime: "create_time",
 	DeleteTime: "delete_time",
 }

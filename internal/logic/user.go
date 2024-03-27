@@ -26,6 +26,66 @@ type (
 	}
 )
 
+func (s *sUser) Ban(ctx context.Context, ban api.Ban) error {
+	err := dao.User.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		db := dao.User.Ctx(ctx).Fields("status").Where("id", ban.Id)
+		if ban.Operate == 1 {
+			if _, err := db.Update(g.Map{
+				"status": 1,
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("封禁失败！")
+			}
+
+			err := service.AdmLog().Save(ctx, "封禁", fmt.Sprintf("封禁用户%d", ban.Id))
+			if err != nil {
+				return err
+			}
+		} else if ban.Operate == 2 {
+			if _, err := db.Update(g.Map{
+				"status": 0,
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("解禁失败！")
+			}
+
+			err := service.AdmLog().Save(ctx, "解禁", fmt.Sprintf("解禁用户%d", ban.Id))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *sUser) GetUserList(ctx context.Context, get api.CommonParams) ([]entity.User, int, error) {
+	var res []entity.User
+	var total int
+	db := dao.User.Ctx(ctx).FieldsEx("password")
+	if get.Keyword != "" {
+		db = db.WhereLike("username", "%"+get.Keyword+"%")
+	}
+	if get.ShowType == 1 {
+		db = db.Order("id asc")
+	} else if get.ShowType == 2 {
+		db = db.Order("id desc")
+	} else {
+		return nil, total, gerror.New("查询失败！")
+	}
+
+	if err := db.Limit((get.PageIndex-1)*get.PageSize, get.PageSize).ScanAndCount(&res, &total, true); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, 0, gerror.New("查询失败")
+	}
+
+	return res, total, nil
+}
+
 func (s *sUser) SearchUser(ctx context.Context, get api.UserSearchParams) ([]api.FollowUserVo, error) {
 	var res []api.FollowUserVo
 
@@ -275,12 +335,14 @@ func (s *sUser) IsLogin(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (s *sUser) GetById(ctx context.Context, id int) (entity.User, error) {
+func (s *sUser) GetById(ctx context.Context, id int) (api.UserRes, error) {
 	db := dao.User.Ctx(ctx)
 
-	var user entity.User
+	var user api.UserRes
 
-	err := db.FieldsEx("password").Where("id", id).Scan(&user)
+	err := db.LeftJoin("image", "image.id = user.avatar").
+		Fields("user.id, username, email, url as avatar, sex, signature,"+
+			"role, user.status, fans_count, like_count, follow_count, user.create_time").Where("id", id).Scan(&user)
 	if err != nil {
 		g.Log().Error(ctx, err)
 		return user, gerror.New("服务器错误，获取用户失败")
@@ -339,8 +401,8 @@ func (s *sUser) Register(ctx context.Context, user api.User) error {
 	return nil
 }
 
-func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, error) {
-	var u entity.User
+func (s *sUser) Login(ctx context.Context, user api.User) (api.UserRes, string, error) {
+	var u api.UserRes
 	if ok, err := s.IsLogin(ctx); err != nil {
 		return u, fmt.Sprintf("%s", service.Context().Get(ctx).Data["token"]), err
 	} else {
@@ -357,7 +419,9 @@ func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, 
 	}).WhereOr(do.User{
 		Email:    user.Username,
 		Password: user.Password,
-	}).FieldsEx("password").Scan(&u)
+	}).LeftJoin("image", "image.id = user.avatar").
+		Fields("user.id, username, email, url as avatar, sex, signature," +
+			"role, user.status, fans_count, like_count, follow_count, user.create_time").Scan(&u)
 
 	if err != nil {
 		g.Log().Error(ctx, err)
@@ -369,6 +433,10 @@ func (s *sUser) Login(ctx context.Context, user api.User) (entity.User, string, 
 		err = g.Redis().SetEX(ctx, consts.TokenKey+token, u.Id, consts.TokenKeyTTL*60)
 		if err != nil {
 			return u, "", err
+		}
+
+		if err != nil {
+			return api.UserRes{}, "", err
 		}
 
 		return u, token, nil

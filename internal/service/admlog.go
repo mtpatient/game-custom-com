@@ -1,9 +1,13 @@
 package service
 
-import "context"
+import (
+	"context"
+	"game-custom-com/api"
+)
 
 type IAdmLog interface {
-	Save(ctx context.Context, t string, msg string)
+	Save(ctx context.Context, t string, msg string) error
+	GetList(ctx context.Context, params api.CommonParams) ([]api.AdmLgoVo, int, error)
 }
 
 var localAdmLog IAdmLog

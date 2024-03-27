@@ -28,22 +28,7 @@ func (c *User) GetUser(r *ghttp.Request) {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
 
-	img, _ := service.Img().GetImageById(r.Context(), user.Avatar)
-
-	r.Response.WriteJsonExit(utility.GetR().PUT("user", &api.UserRes{
-		Id:          user.Id,
-		Username:    user.Username,
-		Email:       user.Email,
-		Avatar:      img.Url,
-		Sex:         user.Sex,
-		Signature:   user.Signature,
-		Role:        user.Role,
-		Status:      user.Status,
-		FansCount:   user.FansCount,
-		LikeCount:   user.LikeCount,
-		FollowCount: user.FollowCount,
-		CreateTime:  user.CreateTime,
-	}))
+	r.Response.WriteJsonExit(utility.GetR().PUT("user", user))
 }
 
 func (c *User) Login(r *ghttp.Request) {
@@ -60,22 +45,7 @@ func (c *User) Login(r *ghttp.Request) {
 		res.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
 
-	img, _ := service.Img().GetImageById(r.Context(), user.Avatar)
-
-	res.WriteJsonExit(utility.GetR().PUT("user", &api.UserRes{
-		Id:          user.Id,
-		Username:    user.Username,
-		Email:       user.Email,
-		Avatar:      img.Url,
-		Sex:         user.Sex,
-		Signature:   user.Signature,
-		Role:        user.Role,
-		Status:      user.Status,
-		FansCount:   user.FansCount,
-		LikeCount:   user.LikeCount,
-		FollowCount: user.FollowCount,
-		CreateTime:  user.CreateTime,
-	}).PUT("token", token))
+	res.WriteJsonExit(utility.GetR().PUT("user", user).PUT("token", token))
 }
 
 func (c *User) Register(r *ghttp.Request) {
@@ -209,4 +179,45 @@ func (c *User) SearchUser(r *ghttp.Request) {
 		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
 	}
 	r.Response.WriteJsonExit(utility.GetR().PUT("users", users))
+}
+
+// GetUserList @router /user/list [post]
+// @Summary 获取用户列表
+// @Description 获取用户列表
+// @Tags user
+// @accept application/json
+// @Param body api.CommonParams
+// @Success utility.R{code=0,msg=””,data{users=[]entity.User,total=int}}
+func (c *User) GetUserList(r *ghttp.Request) {
+	var get api.CommonParams
+	err := r.Parse(&get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	users, total, err := service.User().GetUserList(r.Context(), get)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+
+	r.Response.WriteJsonExit(utility.GetR().PUT("users", users).PUT("total", total))
+}
+
+// Ban @router /user/ban [post]
+// @Summary 获取用户列表
+// @Description 获取用户列表
+// @Tags user
+// @accept application/json
+// @Param body api.Ban
+// @Success utility.R{code=0,msg=””,data{}}
+func (c *User) Ban(r *ghttp.Request) {
+	var ban api.Ban
+	err := r.Parse(&ban)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.RequestErrCode, err.Error()))
+	}
+	err = service.User().Ban(r.Context(), ban)
+	if err != nil {
+		r.Response.WriteJsonExit(utility.GetR().Error(consts.ServiceErrCode, err.Error()))
+	}
+	r.Response.WriteJsonExit(utility.GetR())
 }

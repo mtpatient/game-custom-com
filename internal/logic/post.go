@@ -2,30 +2,107 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"game-custom-com/api"
 	"game-custom-com/internal/consts"
 	"game-custom-com/internal/dao"
 	"game-custom-com/internal/model/do"
+	"game-custom-com/internal/model/entity"
 	"game-custom-com/internal/service"
 	"game-custom-com/utility"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gtime"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
-type sPost struct {
-}
+type sPost struct{}
 
 func init() {
 	service.RegisterPost(&sPost{})
+}
+
+func (s sPost) UpdateStatus(ctx context.Context, update api.UpdateStatus) error {
+	err := dao.Post.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		if _, err := dao.Post.Ctx(ctx).Fields("status").
+			Where("id", update.Id).Update(g.Map{"status": update.Status}); err != nil {
+			g.Log().Error(ctx, err)
+			return gerror.New("更新失败")
+		}
+		if update.Status == 0 {
+			var post entity.Post
+			if err := dao.Post.Ctx(ctx).Where("id", update.Id).Scan(&post); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("查询失败")
+			}
+			uid := service.Context().Get(ctx).User.Id
+			// 发送通知
+			if err := service.Message().Add(ctx, entity.Message{
+				UserId:    uid,
+				ReceiveId: post.UserId,
+				Content:   "你的帖子《" + post.Title + "》已被恢复！",
+				Type:      0,
+				PostId:    post.Id,
+				IsRead:    0,
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("发送通知失败")
+			}
+
+			if err := service.AdmLog().Save(ctx, "恢复帖子", "帖子ID："+gconv.String(post.Id)); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("记录日志失败")
+			}
+
+			go func() {
+				err := service.Message().Publish(context.Background(), post.UserId, "帖子恢复通知")
+				if err != nil {
+					g.Log().Error(ctx, err)
+					return
+				}
+			}()
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s sPost) PostList(ctx context.Context, get api.CommonParams) ([]api.PostBmVo, int, error) {
+	var res []api.PostBmVo
+	var total int
+	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
+		LeftJoin("section", "post.section=section.id").
+		Fields("post.id, user_id, username, section.name as section,title,view_count,post.like_count,collect_count,top_section," +
+			"post.status, post.create_time,post.update_time")
+	if get.Keyword != "" {
+		db = db.WhereLike("title", "%"+get.Keyword+"%").WhereOrLike("content", "%"+get.Keyword+"%")
+	}
+	if get.ShowType == 1 {
+		db = db.Order("id asc")
+	} else if get.ShowType == 2 {
+		db = db.Order("id desc")
+	} else {
+		return nil, total, gerror.New("参数错误")
+	}
+
+	if err := db.Limit((get.PageIndex-1)*get.PageSize, get.PageSize).ScanAndCount(&res, &total, false); err != nil {
+		g.Log().Error(ctx, err)
+		return nil, 0, gerror.New("查询失败")
+	}
+
+	return res, total, nil
 }
 
 func (s sPost) SearchPost(ctx context.Context, get api.SearchParams) ([]api.PostVo, error) {
 	var res []api.PostVo
 	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
 		InnerJoin("image", "user.avatar = image.id").
-		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
-			"top_section,post.status,post.create_time, url as avatar")
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self,"+
+			"top_section,post.status,post.create_time, url as avatar").Where("status", 0)
 
 	if get.ShowType == 1 {
 		// 热门排序
@@ -116,8 +193,9 @@ func (s sPost) GetFollow(ctx context.Context, get api.GetPostParams) ([]api.Post
 	var res []api.PostVo
 	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
 		InnerJoin("image", "user.avatar = image.id").
-		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
-			"top_section,post.status,post.create_time, url as avatar").Where("MONTH(post.create_time) = MONTH(CURDATE())")
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self,"+
+			"top_section,post.status,post.create_time, url as avatar").
+		Where("MONTH(post.create_time) = MONTH(CURDATE())").Where("status", 0)
 
 	uid := service.Context().Get(ctx).User.Id
 
@@ -176,8 +254,9 @@ func (s sPost) GetPostList(ctx context.Context, get api.GetPostParams) ([]api.Po
 	var res []api.PostVo
 	db := dao.Post.Ctx(ctx).LeftJoin("user", "post.user_id=user.id").
 		InnerJoin("image", "user.avatar = image.id").
-		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self," +
-			"top_section,post.status,post.create_time, url as avatar").Where("MONTH(post.create_time) = MONTH(CURDATE())")
+		Fields("post.id,title,user_id,content,section,username,view_count,post.like_count,collect_count,top_self,"+
+			"top_section,post.status,post.create_time, url as avatar").
+		Where("MONTH(post.create_time) = MONTH(CURDATE())").Where("status", 0)
 
 	if get.Id != 0 {
 		db = db.Where("section", get.Id)
@@ -239,7 +318,7 @@ func (s sPost) GetPostList(ctx context.Context, get api.GetPostParams) ([]api.Po
 func (s sPost) GetTopPost(ctx context.Context, id int) ([]api.TopPostVo, error) {
 	var res []api.TopPostVo
 
-	err := dao.Post.Ctx(ctx).Fields("id, title").Where("section", id).
+	err := dao.Post.Ctx(ctx).Fields("id, title").Where("section", id).Where("status", 0).
 		Where("top_section", 1).Scan(&res)
 	if err != nil {
 		g.Log().Error(ctx, err)
@@ -251,17 +330,39 @@ func (s sPost) GetTopPost(ctx context.Context, id int) ([]api.TopPostVo, error) 
 
 func (s sPost) Update(ctx context.Context, update api.PostAdd) error {
 	err := dao.Post.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		_, err := dao.Post.Ctx(ctx).Where("id", update.Post.Id).
-			Fields("title,content,section,status").
-			Update(g.Map{
-				"title":   update.Post.Title,
-				"content": update.Post.Content,
-				"section": update.Post.Section,
-				"status":  update.Post.Status,
-			})
+		uid := service.Context().Get(ctx).User.Id
+		status, err := dao.Post.Ctx(ctx).Where("user_id", uid).Where("id", update.Post.Id).Value("status")
 		if err != nil {
 			g.Log().Error(ctx, err)
-			return gerror.New("更新帖子失败！")
+			return gerror.New("查找帖子失败！")
+		}
+
+		db := dao.Post.Ctx(ctx).Where("id", update.Post.Id).Where("user_id", uid).
+			Fields("title,content,section,status,update_time")
+		if status.Int() == 1 {
+			// 被封禁后更新，状态改为3，等待管理员审核
+			if _, err := db.Update(g.Map{
+				"title":       update.Post.Title,
+				"content":     update.Post.Content,
+				"section":     update.Post.Section,
+				"status":      3,
+				"update_time": gtime.Now(),
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("更新帖子失败！")
+			}
+		} else {
+			// 普通更新
+			if _, err := db.Update(g.Map{
+				"title":       update.Post.Title,
+				"content":     update.Post.Content,
+				"section":     update.Post.Section,
+				"status":      update.Post.Status,
+				"update_time": gtime.Now(),
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("更新帖子失败！")
+			}
 		}
 
 		imgDb := dao.Image.Ctx(ctx)
@@ -309,8 +410,7 @@ func (s sPost) Update(ctx context.Context, update api.PostAdd) error {
 		return nil
 	})
 	if err != nil {
-		g.Log().Error(ctx, err)
-		return gerror.New("更新帖子失败！")
+		return err
 	}
 
 	return nil
@@ -367,6 +467,12 @@ func (s sPost) Top(ctx context.Context, top api.TopPost) error {
 				g.Log().Error(ctx, err)
 				return gerror.New("帖子板块置顶失败！")
 			}
+			// 保存管理员操作日志
+
+			if err := service.AdmLog().Save(ctx, "帖子", fmt.Sprintf("帖子：%s", top.Id)); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("保存管理员操作日志失败！")
+			}
 		} else {
 			return gerror.New("权限不足！")
 		}
@@ -379,6 +485,11 @@ func (s sPost) Top(ctx context.Context, top api.TopPost) error {
 				g.Log().Error(ctx, err)
 				return gerror.New("帖子板块取消置顶失败！")
 			}
+
+			if err := service.AdmLog().Save(ctx, "帖子", fmt.Sprintf("帖子：%s", top.Id)); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("保存管理员操作日志失败！")
+			}
 		} else {
 			return gerror.New("权限不足！")
 		}
@@ -390,12 +501,80 @@ func (s sPost) Top(ctx context.Context, top api.TopPost) error {
 }
 
 func (s sPost) Del(ctx context.Context, id int) error {
-	uid := service.Context().Get(ctx).User.Id
+	user := service.Context().Get(ctx).User
 
-	_, err := dao.Post.Ctx(ctx).Where("id", id).Where("user_id", uid).Delete()
+	err := dao.Post.Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 如果是管理员，则直接删除，并发送消息给对应用户，否则只能删除自己的帖子
+		if user.Role == 1 {
+			var post entity.Post
+			if err := dao.Post.Ctx(ctx).Where("id", id).Scan(&post); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("帖子不存在或状态异常")
+			}
+			_, err := dao.Post.Ctx(ctx).Where("id", id).Fields("status").Update(g.Map{
+				"status": 1,
+			})
+			if err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("删除失败")
+			}
+			// 保存管理员操作日志
+
+			if err := service.AdmLog().Save(ctx, "删除帖子", "帖子ID："+post.Title); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("保存管理员操作日志失败")
+			}
+			// 发送通知
+			if err := service.Message().Add(ctx, entity.Message{
+				UserId:    user.Id,
+				ReceiveId: post.UserId,
+				Content:   "你的帖子《" + post.Title + "》涉嫌违规，已被删除，请修改后重新发布!",
+				Type:      0,
+				PostId:    post.Id,
+				IsRead:    0,
+			}); err != nil {
+				g.Log().Error(ctx, err)
+				return err
+			}
+
+			if err := service.Message().Publish(ctx, post.UserId, "删除帖子通知"); err != nil {
+				g.Log().Error(ctx, err)
+				return err
+			}
+		} else {
+			_, err := dao.Post.Ctx(ctx).Where("id", id).Where("user_id", user.Id).Fields("status").Update(g.Map{
+				"status": 1,
+			})
+			if err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("删除失败")
+			}
+		}
+		// 删除帖子对应的图片
+		//imgDb := dao.Image.Ctx(ctx)
+		//array, err := imgDb.Fields("url").Where("post_id", id).Array()
+		//if err != nil {
+		//	g.Log().Error(ctx, err)
+		//	return gerror.New("获取图片失败")
+		//}
+		//if len(array) > 0 {
+		//	// 数据库删除
+		//	_, err = imgDb.Where("id", id).Delete()
+		//	if err != nil {
+		//		g.Log().Error(ctx, err)
+		//		return gerror.New("删除图片失败！")
+		//	}
+		//	// 从COS删除
+		//	err := utility.CosDel(ctx, toString(array))
+		//	if err != nil {
+		//		g.Log().Error(ctx, err)
+		//		return gerror.New("COS删除对象失败！")
+		//	}
+		//}
+		return nil
+	})
 	if err != nil {
-		g.Log().Error(ctx, err)
-		return gerror.New("删除失败")
+		return err
 	}
 
 	return nil
@@ -410,9 +589,11 @@ func (s sPost) GetById(ctx context.Context, id int) (api.PostDetail, error) {
 		return postDetail, gerror.New("帖子不存在或状态异常")
 	}
 	// 判断帖子是否存在且为公共可见状态
-	if postDetail.Post.Status != 0 && postDetail.Post.Status != 2 {
+	user := service.Context().Get(ctx).User
+	if (user == nil && postDetail.Post.Status != 0) || (postDetail.Post.Status != 0 && user.Id != postDetail.Post.UserId && user.Role == 0) {
 		return postDetail, gerror.New("帖子不存在或状态异常")
 	}
+
 	_, err = postDb.Where("id", id).FieldsEx("update_time").OmitEmpty().Update(g.Map{
 		"view_count": gdb.Raw("view_count+1"),
 	})
@@ -532,10 +713,10 @@ func (s sPost) Like(ctx context.Context, like api.PostLike) error {
 
 	// 将点赞信息存入redis
 	if like.Operate == 1 {
-		//_, err := g.Redis().SAdd(ctx, consts.PostLikesKey+strconv.Itoa(like.PostId), uid)
-		//if err != nil {
-		//	return err
-		//}
+		// TODO 优化查询是否点赞的操作
+		if _, err := g.Redis().SAdd(ctx, consts.PostLikesKey+gconv.String(like.PostId), uid); err != nil {
+			return err
+		}
 
 		// 更新数据库
 		err := dao.Like.Transaction(context.Background(), func(ctx context.Context, tx gdb.TX) error {
@@ -590,16 +771,20 @@ func (s sPost) Like(ctx context.Context, like api.PostLike) error {
 				g.Log().Error(ctx, err)
 				return gerror.New("添加消息失败")
 			}
+			if err := service.Message().Publish(ctx, like.ToUserId, "点赞"); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("发布消息失败！")
+			}
+
 			return nil
 		})
 		if err != nil {
 			return err
 		}
 	} else if like.Operate == 2 {
-		//_, err := g.Redis().SRem(ctx, consts.PostLikesKey+strconv.Itoa(like.PostId), uid)
-		//if err != nil {
-		//	return err
-		//}
+		if _, err := g.Redis().SRem(ctx, consts.PostLikesKey+gconv.String(like.PostId), uid); err != nil {
+			return err
+		}
 
 		//更新数据库
 		err := dao.Like.Transaction(context.Background(), func(ctx context.Context, tx gdb.TX) error {
@@ -650,6 +835,10 @@ func (s sPost) Like(ctx context.Context, like api.PostLike) error {
 			if err != nil {
 				g.Log().Error(ctx, err)
 				return gerror.New("删除消息失败")
+			}
+			if err := service.Message().Publish(ctx, like.ToUserId, "取消点赞"); err != nil {
+				g.Log().Error(ctx, err)
+				return gerror.New("发布消息失败！")
 			}
 			return nil
 		})

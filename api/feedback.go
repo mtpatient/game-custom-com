@@ -2,7 +2,8 @@ package api
 
 import "game-custom-com/internal/model/entity"
 
-type FeedbackAdd struct {
-	Feedback entity.Feedback `json:"feedback"`
-	Images   []string        `json:"images"`
+type FeedbackVo struct {
+	entity.Feedback
+	Images   []string `json:"images"`
+	Username string   `json:"username"`
 }
